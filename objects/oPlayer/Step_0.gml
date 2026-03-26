@@ -1,4 +1,4 @@
-
+ 
 if(hascontrol) {
 //Get Player Input
 key_left=keyboard_check(vk_left) || keyboard_check(ord("A"));
@@ -29,6 +29,16 @@ else
 	key_right=0;
 	key_jump=0;
 }
+
+// Scădere graduală HP (efect vizual)
+if (hp_temp > hp)
+	hp_temp = max(hp, hp_temp - 0.5);
+
+// Shake inimi când se ia damage
+if (hp_temp > hp && hp_temp > 0)
+	heart_shake = random_range(-5, 5);
+else
+	heart_shake = 0;
 
 
 

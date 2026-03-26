@@ -7,7 +7,10 @@ if(hp<=0)
 		direction=other.hitfrom;
 		hsp=lengthdir_x(2,direction); // Mai lent și la moarte
 		vsp=lengthdir_y(2, direction)-2;
-		if(sign(hsp)!=0) image_xscale=sign(hsp)*4; // Wolf mare - scalat vizual la 4x
+		if (sign(hsp) != 0)
+			image_xscale = -sign(hsp) * 4;
+		else
+			image_xscale = 4;
 		image_yscale=4;
 		sprite_index=sWolfD; // Folosește sprite-ul de moarte Wolf
 	}

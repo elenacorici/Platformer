@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"Enemy_Idle_Update",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"Enemy_Idle_Update",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

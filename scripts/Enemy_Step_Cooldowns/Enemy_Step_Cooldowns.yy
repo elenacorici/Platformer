@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"Enemy_Step_Cooldowns",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"Enemy_Step_Cooldowns",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

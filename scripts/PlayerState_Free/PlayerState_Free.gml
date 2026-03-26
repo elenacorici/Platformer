@@ -96,10 +96,9 @@ else
 	}
 }
 
-if(sign(hsp)!=0)
-{
-	image_xscale=sign(hsp);
-}
+// Sprite-uri desenate spre stanga: oglindim față de convenția „spre dreapta”
+if (sign(hsp) != 0)
+	image_xscale = -sign(hsp);
 
 if(keyAttack) state = PLAYERSTATE.ATTACK_SLASH;
 }

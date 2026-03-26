@@ -36,11 +36,13 @@ if(sprite_index!= sPlayerA)
 //Folosim un attack hitbox si verificam daca exista hits
 mask_index= sPlayerAHB; 
 // Calculează direcția de atac (bazată pe direcția player-ului) - variabilă de instanță
-attack_dir = image_xscale > 0 ? 0 : 180;
+// Aliniat cu sprite stânga + image_xscale = -sign(hsp)
+attack_dir = image_xscale > 0 ? 180 : 0;
 
 var hitByAttackNow=ds_list_create();
 var hits= instance_place_list(x,y,oEnemy, hitByAttackNow,false);
-hits += instance_place_list(x,y,oEnemyBig, hitByAttackNow,false); // Adaugă și oEnemyBig
+hits += instance_place_list(x,y,oEnemyBig, hitByAttackNow,false);
+hits += instance_place_list(x,y,oBoss1, hitByAttackNow,false);
 if(hits>0)
 {
 		for(var i=0; i<hits; i++)

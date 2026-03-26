@@ -30,10 +30,7 @@
   "resourceType":"GMObject",
   "resourceVersion":"2.0",
   "solid":false,
-  "spriteId":{
-    "name":"sGun",
-    "path":"sprites/sGun/sGun.yy",
-  },
+  "spriteId":null,
   "spriteMaskId":null,
   "visible":true,
 }

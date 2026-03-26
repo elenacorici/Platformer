@@ -1,67 +1,48 @@
-vsp= vsp + grv;
-//Nu pica de pe margini
-if(grounded)&& (afraidOfHeights)&&(!place_meeting(x+hsp, y+1, oWall))
+vsp += grv;
+
+var ctx = Enemy_GetPlayerContext();
+Enemy_Step_Cooldowns();
+
+var _idle_ledge_dir = (state == ENEMYSTATE.CHASE) ? ctx.chase_dir : patrol_dir;
+var _idle_skip_near = (state == ENEMYSTATE.CHASE && ctx.dist <= attack_range);
+Enemy_Idle_Update(ctx, _idle_ledge_dir, _idle_skip_near);
+
+if (state == ENEMYSTATE.CHASE)
 {
-	hsp=-hsp;
+	if (!instance_exists(oPlayer) || ctx.dist > sight_range || abs(y - oPlayer.y) >= ctx.same_level_max || !ctx.floor_toward_player)
+		state = ENEMYSTATE.FREE;
 }
 
-//Horizontal Collision
-if(place_meeting(x+hsp,y,oWall))
+if (state == ENEMYSTATE.FREE && ctx.can_see_player && ctx.floor_toward_player)
+	state = ENEMYSTATE.CHASE;
+
+if (state == ENEMYSTATE.CHASE && instance_exists(oPlayer) && grounded && attack_cooldown <= 0
+	&& ctx.dist <= attack_range && ctx.floor_toward_player && abs(y - oPlayer.y) < ctx.same_level_max)
 {
-	while(!place_meeting(x+sign(hsp),y,oWall))
+	if (idle_break_phase != 0)
 	{
-		x=x+sign(hsp);
+		idle_break_phase = 0;
+		idle_break_breath_timer = 0;
 	}
+	state_after_attack = ENEMYSTATE.CHASE;
+	state = ENEMYSTATE.ATTACK;
+	image_index = 0;
+	ds_list_clear(hitPlayerThisAttack);
+}
+
+switch (state)
+{
+	case ENEMYSTATE.FREE:
+		EnemyState_Free();
+		break;
 	
-	hsp=-hsp;
-}
-x= x + hsp;
-
-
-//Vertical Collision
-if(place_meeting(x,y+vsp,oWall))
-{
-	while(!place_meeting(x,y+sign(vsp),oWall))
-	{
-		y=y+sign(vsp);
-	}
+	case ENEMYSTATE.CHASE:
+		EnemyState_Chase(ctx);
+		break;
 	
-	vsp=0;
-}
-y= y + vsp;
-
-//Animation
-//If the Sprite is not on the ground, that means that its jumping
-if(!place_meeting(x, y+1, oWall))
-{
-	grounded=false;
-	image_speed=1;
-	sprite_index=sEnemyJ;
-}
-//If the sprite its not jumping, its idling or walking
-else
-{
-	grounded=true;
-	image_speed=1
-	if(sign(hsp)==0)
-	{
-		sprite_index=sEnemy;
-	}
-	else
-	{	
-		sprite_index= sEnemyR;
-		
-		
-		
-	}
+	case ENEMYSTATE.ATTACK:
+		EnemyState_Attack();
+		break;
 }
 
-if(sign(hsp)!=0)
-		{
-			image_xscale=sign(hsp)*size;
-		}
-		else
-		{
-			image_xscale=size;
-		}
-image_yscale=size;
+Enemy_UpdateFacing(ctx);
