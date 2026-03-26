@@ -35,3 +35,15 @@ if(layer_exists("Trees"))
 	layer_x("Trees", x/4);
 	
 }
+//Parallax Bckrounds oThree
+if(layer_exists("Par1"))
+{
+	layer_x("Par1", x/2);
+	
+}
+
+if(layer_exists("Par2"))
+{
+	layer_x("Par2", x/4);
+	
+}
