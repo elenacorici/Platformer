@@ -1,5 +1,5 @@
 /// @func EnemyState_Attack()
-/// @desc Animație atac, hitbox, ieșire la sfârșitul animației.
+/// @desc Animație atac + hitbox; sprite-uri după tip (oEnemy vs lup).
 function EnemyState_Attack()
 {
 	hsp = 0;
@@ -7,7 +7,10 @@ function EnemyState_Attack()
 	Enemy_HorizontalResolve();
 	Enemy_VerticalResolve();
 	
-	sprite_index = sEnemyA;
+	if (Enemy_IsWolfEnemy())
+		sprite_index = sWolfA;
+	else
+		sprite_index = sEnemyA;
 	image_speed = attack_anim_speed;
 	
 	Enemy_AttackHitbox();

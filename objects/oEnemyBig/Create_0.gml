@@ -11,3 +11,7 @@ check_distance = 60;
 
 // Wolf este mare vizual dar trebuie bbox mai mic pentru coliziuni
 mask_index = sEnemy; // Folosește bbox-ul de la Enemy pentru coliziuni mai precise
+
+// Vizual — Enemy_UpdateFacing folosește size
+if (object_index == oEnemyBig)
+	size = 4;

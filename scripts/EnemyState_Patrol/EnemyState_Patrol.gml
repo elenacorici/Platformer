@@ -1,5 +1,6 @@
-/// @func EnemyState_Free()
-function EnemyState_Free()
+/// @func EnemyState_Patrol()
+/// @desc Patrulare (fost FREE): viteză patrol, idle la margine, animație unificată.
+function EnemyState_Patrol()
 {
 	hsp = patrol_move_speed * patrol_dir;
 	if (idle_break_phase != 0)

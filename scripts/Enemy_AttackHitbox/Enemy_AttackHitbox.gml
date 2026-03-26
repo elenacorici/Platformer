@@ -1,11 +1,16 @@
 /// @func Enemy_AttackHitbox()
+/// @desc Mask și damage în funcție de tip inamic (oEnemy vs lup).
 function Enemy_AttackHitbox()
 {
 	if (state != ENEMYSTATE.ATTACK)
 		return;
 	
 	var _old_mask = mask_index;
-	mask_index = sEnemyAHitBox;
+	if (Enemy_IsWolfEnemy())
+		mask_index = sWolfAHB;
+	else
+		mask_index = sEnemyAHitBox;
+	
 	var _plist = ds_list_create();
 	var _nhits = instance_place_list(x, y, oPlayer, _plist, false);
 	for (var _hi = 0; _hi < _nhits; _hi++)

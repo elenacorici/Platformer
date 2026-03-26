@@ -10,10 +10,10 @@ Enemy_Idle_Update(ctx, _idle_ledge_dir, _idle_skip_near);
 if (state == ENEMYSTATE.CHASE)
 {
 	if (!instance_exists(oPlayer) || ctx.dist > sight_range || abs(y - oPlayer.y) >= ctx.same_level_max || !ctx.floor_toward_player)
-		state = ENEMYSTATE.FREE;
+		state = ENEMYSTATE.PATROL;
 }
 
-if (state == ENEMYSTATE.FREE && ctx.can_see_player && ctx.floor_toward_player)
+if (state == ENEMYSTATE.PATROL && ctx.can_see_player && ctx.floor_toward_player)
 	state = ENEMYSTATE.CHASE;
 
 if (state == ENEMYSTATE.CHASE && instance_exists(oPlayer) && grounded && attack_cooldown <= 0
@@ -32,8 +32,8 @@ if (state == ENEMYSTATE.CHASE && instance_exists(oPlayer) && grounded && attack_
 
 switch (state)
 {
-	case ENEMYSTATE.FREE:
-		EnemyState_Free();
+	case ENEMYSTATE.PATROL:
+		EnemyState_Patrol();
 		break;
 	
 	case ENEMYSTATE.CHASE:

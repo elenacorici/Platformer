@@ -1,9 +1,9 @@
 {
   "$GMScript":"v1",
-  "%Name":"EnemyState_Free",
+  "%Name":"EnemyState_Patrol",
   "isCompatibility":false,
   "isDnD":false,
-  "name":"EnemyState_Free",
+  "name":"EnemyState_Patrol",
   "parent":{
     "name":"Scripts",
     "path":"folders/Scripts.yy",

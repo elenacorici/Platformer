@@ -23,7 +23,7 @@ function Enemy_Idle_Update(_ctx, _ledge_dir, _skip_near_for_attack_range)
 	}
 	
 	if (idle_break_phase == 0 && idle_break_cooldown <= 0 && grounded
-		&& (state == ENEMYSTATE.FREE || state == ENEMYSTATE.CHASE) && _at_platform_edge
+		&& (state == ENEMYSTATE.PATROL || state == ENEMYSTATE.CHASE) && _at_platform_edge
 		&& random(1) < idle_break_roll_chance_ledge)
 	{
 		if (!_skip_near_for_attack_range)

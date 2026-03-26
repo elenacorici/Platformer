@@ -1,10 +1,10 @@
-/// @description Init (ENEMYSTATE in script EnemyState_Definitions)
-state = ENEMYSTATE.FREE;
-// După animația de atac revine la CHASE (sau FREE dacă setezi altceva)
+/// @description Init (ENEMYSTATE în EnemyState_Definitions)
+state = ENEMYSTATE.PATROL;
+// După animația de atac revine la CHASE (sau PATROL dacă setezi altceva)
 state_after_attack = ENEMYSTATE.CHASE;
 
 move_speed = 2;           // viteză în chase (urmărire)
-patrol_move_speed = 0.75; // mult mai încet la patrol (FREE)
+patrol_move_speed = 0.75; // mult mai încet la patrol (PATROL)
 size = 1.3;
 patrol_dir = 1;
 mask_index = sEnemy;
