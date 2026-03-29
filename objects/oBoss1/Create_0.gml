@@ -1,3 +1,5 @@
+depth = 580; // în fața Player(600)
+boss_layer = layer; // salvat pentru scripturi
 hp = 100;
 max_hp = 100;
 flash = 0;
@@ -15,8 +17,16 @@ grv = 0.1;
 
 mask_index = sBoss1;
 
-// Phase system (structura pentru viitor)
+// Phase system
 phase = 1; // 1 = normal, 2 = HP < 50%
+
+// Cooldown-uri atacuri
+attack_cooldown  = 120;
+hop_cooldown     = 0;
+ivy_cooldown     = 0;
+slam_cooldown    = 0;
+slam_recover_timer = 0;
+slam_hit_list    = ds_list_create();
 
 // Attack tracking
 attack_ivy_inst1 = noone;

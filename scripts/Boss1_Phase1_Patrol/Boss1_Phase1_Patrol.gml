@@ -28,10 +28,11 @@ function Boss1_Phase1_Patrol() {
     if (state == "patrol_idle") {
         patrol_idle_timer--;
         if (patrol_idle_timer <= 0) {
-            state = "patrol";
-            sprite_index = sBoss1W;
+            state = "idle";
+            sprite_index = sBoss1I;
             image_index = 0;
-            image_speed = 0.15;
+            image_speed = idle_image_speed;
+            attack_cooldown = 0; // decide imediat următoarea acțiune
         }
     }
 

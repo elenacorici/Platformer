@@ -5,6 +5,14 @@ if (phase == "grow" && !particles_spawned) {
     particles_spawned = true;
 }
 
+// Primele 3 frame-uri (telegraph) mai lente, restul mai rapide
+if (phase == "grow") {
+    if (image_index < 3)
+        image_speed = 0.12; // lent — timp să se ferească
+    else
+        image_speed = 0.3;  // normal
+}
+
 if (phase == "grow" && animation_end()) {
     image_speed = 0;
     phase = "stun";

@@ -10,7 +10,13 @@ if (instance_exists(oPlayer) && state != "patrol" && state != "idle" && state !=
 image_xscale = facing * boss_scale;
 image_yscale = boss_scale;
 
-// ── TEST INPUT ──────────────────────────────────
+// ── COOLDOWN-URI ────────────────────────────────
+if (attack_cooldown > 0) attack_cooldown--;
+if (hop_cooldown    > 0) hop_cooldown--;
+if (ivy_cooldown    > 0) ivy_cooldown--;
+if (slam_cooldown   > 0) slam_cooldown--;
+
+// ── TEST INPUT (temporar) ───────────────────────
 if (keyboard_check_pressed(ord("U"))) {
     state = "patrol";
     sprite_index = sBoss1W;
@@ -34,6 +40,11 @@ else if (keyboard_check_pressed(ord("T"))) {
     image_speed = 0.15;
 }
 
+// ── DECIZIE AUTOMATĂ ────────────────────────────
+if (state == "idle" && attack_cooldown <= 0) {
+    Boss1_DecideAction();
+}
+
 // ── STATE MACHINE ───────────────────────────────
 if (state == "idle") {
     sprite_index = sBoss1I;
@@ -43,5 +54,6 @@ if (state == "idle") {
 Boss1_Phase1_Patrol();
 Boss1_Phase2_Hop();
 Boss1_Phase3_Ivy();
+Boss1_Phase4_Slam();
 
 prev_image_index = image_index;

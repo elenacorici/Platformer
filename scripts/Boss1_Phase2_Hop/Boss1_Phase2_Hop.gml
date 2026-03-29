@@ -46,10 +46,28 @@ function Boss1_Phase2_Hop() {
                 var _bot = y + (sprite_get_height(sprite_index) - sprite_get_yoffset(sprite_index)) * boss_scale - 15;
                 part_particles_create(p_sys, x - 40, _bot, p_dirt, 30);
                 part_particles_create(p_sys, x + 40, _bot, p_dirt, 30);
+                instance_create_layer(x, _bot, boss_layer, oHole);
             }
             hsp = 0;
             vsp = 0;
         }
+
+        // Hitbox activ pe toată durata animației land
+        var _old_mask = mask_index;
+        mask_index = sBossL;
+        var _lhit_list = ds_list_create();
+        var _lhits = instance_place_list(x, y, oPlayer, _lhit_list, false);
+        for (var _i = 0; _i < _lhits; _i++) {
+            var _pid = _lhit_list[| _i];
+            with (_pid) {
+                hp--;
+                hp = max(0, hp);
+                flash = 3;
+                hitfrom = point_direction(other.x, other.y, x, y);
+            }
+        }
+        ds_list_destroy(_lhit_list);
+        mask_index = _old_mask;
 
         if (image_index < prev_image_index) {
             state = "attack_hop_recover";
