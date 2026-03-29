@@ -12,6 +12,8 @@ hp_temp = 6;   // pentru scădere graduală
 heart_shake = 0;
 flash = 0;
 hitfrom = 0;
+image_xscale=1.30;
+image_yscale=1.25;
 
 // Define enum before using it
 enum PLAYERSTATE
@@ -35,6 +37,10 @@ roll_speed = 5;
 jumps_max = 2;
 jumps_left = 2;
 
+combo_count = 0;
+combo_timer = 0;
+combo_window = 20;
+
 // Double jump — particule (stratul din cameră: „Player”, nu „Instances”)
 p_sys = part_system_create_layer("Player", false);
 p_dust = part_type_create();
@@ -46,3 +52,6 @@ part_type_speed(p_dust, 1, 3, -0.1, 0);
 part_type_direction(p_dust, 0, 360, 0, 30);
 part_type_gravity(p_dust, 0.2, 270);
 part_type_life(p_dust, 15, 25);
+
+is_stunned = false;
+stun_timer = 0;

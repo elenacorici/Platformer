@@ -1,5 +1,13 @@
  
-if(hascontrol) {
+// Stun — player blocat complet
+if (is_stunned) {
+    stun_timer--;
+    if (stun_timer <= 0)
+        is_stunned = false;
+    hsp = 0;
+    vsp = 0;
+}
+else if(hascontrol) {
 //Get Player Input
 key_left=keyboard_check(vk_left) || keyboard_check(ord("A"));
 key_right=keyboard_check(vk_right) || keyboard_check(ord("D"));
@@ -31,6 +39,7 @@ else
 	key_jump=0;
 	key_jump_pressed=0;
 }
+
 
 // Scădere graduală HP (efect vizual)
 if (hp_temp > hp)
