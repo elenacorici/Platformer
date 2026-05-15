@@ -11,3 +11,8 @@ shake_length=0;
 shake_magnitude=0;
 shake_remain=0;
 buff=32;
+
+// Letterbox pentru tunel
+letterbox_current = 0;   // pixels tăiați sus și jos (0 = nimic)
+letterbox_target  = 0;
+letterbox_max     = 200; // cât de mult se îngustează — ajustează după gust

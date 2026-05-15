@@ -7,23 +7,34 @@ if (phase == "grow" && !particles_spawned) {
 
 // Primele 3 frame-uri (telegraph) mai lente, restul mai rapide
 if (phase == "grow") {
-    if (image_index < 3)
-        image_speed = 0.12; // lent — timp să se ferească
+    if (image_index < 4)
+        image_speed = 0.25; // rapid — radăcini
     else
-        image_speed = 0.3;  // normal
+        image_speed = 0.3;  // normal — vita crește
+}
+
+// La frame 4 — verificăm dacă player-ul e prins (nu mai poate scăpa după)
+if (phase == "grow" && floor(image_index) == 4 && !player_caught) {
+    if (instance_exists(oPlayer) && abs(oPlayer.x - x) <= 50 && oPlayer.y >= y - 120) {
+        player_caught = true;
+    }
 }
 
 if (phase == "grow" && animation_end()) {
     image_speed = 0;
-    phase = "stun";
-    // Mută player-ul în centrul viței și blochează
-    if (instance_exists(oPlayer)) {
+    if (player_caught) {
+        phase = "stun";
         oPlayer.x = x;
-        oPlayer.y = y - 85;
+        oPlayer.y = y - 75;
         oPlayer.vsp = 0;
         oPlayer.hsp = 0;
         oPlayer.is_stunned = true;
         oPlayer.stun_timer = stun_timer;
+    } else {
+        phase = "retract";
+        sprite_index = sVineD;
+        image_index = 0;
+        image_speed = 0.4;
     }
 }
 
@@ -33,7 +44,7 @@ if (phase == "stun") {
     // Ține player-ul fix în centrul viței în fiecare frame
     if (instance_exists(oPlayer)) {
         oPlayer.x = x;
-        oPlayer.y = y - 95;
+        oPlayer.y = y - 75;
         oPlayer.vsp = 0;
         oPlayer.hsp = 0;
     }

@@ -1,7 +1,7 @@
-depth = 580; // în fața Player(600)
+depth = 50; // în fața Tiles(100)
 boss_layer = layer; // salvat pentru scripturi
-hp = 100;
-max_hp = 100;
+hp = 2;
+max_hp = 2;
 flash = 0;
 hitfrom = 0;
 
@@ -24,6 +24,9 @@ phase = 1; // 1 = normal, 2 = HP < 50%
 attack_cooldown  = 120;
 hop_cooldown     = 0;
 ivy_cooldown     = 0;
+ivy_target_x     = 0;
+ivy_target_y     = 0;
+last_attack      = "";
 slam_cooldown    = 0;
 slam_recover_timer = 0;
 slam_hit_list    = ds_list_create();

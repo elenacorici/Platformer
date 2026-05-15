@@ -1,8 +1,12 @@
+// Inactiv în timpul intro-ului copacului
+if (instance_exists(oBossTree) && oBossTree.state != "done")
+    exit;
+
 vsp += grv;
 Enemy_VerticalResolve();
 
 // Se întoarce spre player doar în atac
-if (instance_exists(oPlayer) && state != "patrol" && state != "idle" && state != "patrol_idle") {
+if (instance_exists(oPlayer) && state != "patrol" && state != "idle" && state != "patrol_idle" && state != "dizzy" && state != "dying" && state != "grave") {
     var _dir = sign(oPlayer.x - x);
     if (_dir != 0) facing = -_dir;
 }
@@ -38,6 +42,10 @@ else if (keyboard_check_pressed(ord("T"))) {
     image_index = 0;
     prev_image_index = 0;
     image_speed = 0.15;
+    if (instance_exists(oPlayer)) {
+        ivy_target_x = oPlayer.x;
+        ivy_target_y = oPlayer.y;
+    }
 }
 
 // ── DECIZIE AUTOMATĂ ────────────────────────────
@@ -51,9 +59,33 @@ if (state == "idle") {
     image_speed = idle_image_speed;
 }
 
-Boss1_Phase1_Patrol();
-Boss1_Phase2_Hop();
-Boss1_Phase3_Ivy();
-Boss1_Phase4_Slam();
+if (state != "dizzy" && state != "dying" && state != "grave")
+{
+    Boss1_Phase1_Patrol();
+    Boss1_Phase2_Hop();
+    Boss1_Phase3_Ivy();
+    Boss1_Phase4_Slam();
+}
+
+// ── DEATH STATES ────────────────────────────────
+if (state == "dying")
+{
+    if (animation_end())
+    {
+        state = "grave";
+        sprite_index = sBossGrave;
+        image_index = 0;
+        image_speed = 0.07;
+    }
+}
+
+if (state == "grave")
+{
+    if (image_index >= sprite_get_number(sBossGrave) - 1)
+    {
+        image_index = sprite_get_number(sBossGrave) - 1;
+        image_speed = 0;
+    }
+}
 
 prev_image_index = image_index;

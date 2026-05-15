@@ -19,6 +19,7 @@ part_type_gravity(p_dirt, 0.3, 270);
 part_type_life(p_dirt, 20, 40);
 
 particles_spawned = false;
+player_caught = false;
 
 // Spawns cele 2 jumătăți
 ivy_back = instance_create_layer(x, y, layer, oIvyBack);

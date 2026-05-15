@@ -6,11 +6,20 @@ function Boss1_Phase3_Ivy() {
             image_speed = 0;
             image_index = 5;
             if (instance_exists(oPlayer)) {
-                var _px = oPlayer.x;
-                var _py = oPlayer.y + 45;
-                attack_ivy_inst1 = instance_create_layer(_px, _py, boss_layer, oIvy);
+                var _dist = point_distance(ivy_target_x, ivy_target_y, oPlayer.x, oPlayer.y);
+                if (_dist <= 40) {
+                    // Player nu a scăpat — spawn vine la poziția înregistrată
+                    attack_ivy_inst1 = instance_create_layer(ivy_target_x, ivy_target_y + 45, boss_layer, oIvy);
+                    state = "attack_ivy_wait";
+                } else {
+                    // Player a scăpat din rază — atacul ratează
+                    state = "attack_ivy_end";
+                    image_index = 5;
+                    image_speed = 0.3;
+                }
+            } else {
+                state = "attack_ivy_wait";
             }
-            state = "attack_ivy_wait";
         }
     }
 

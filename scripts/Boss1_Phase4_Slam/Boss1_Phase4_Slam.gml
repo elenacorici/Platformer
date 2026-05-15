@@ -7,7 +7,7 @@ function Boss1_Phase4_Slam() {
         var _fp = floor(prev_image_index);
 
         // Frame 7 = începe căderea rapidă
-        if (_fi == 7 && _fp != 7) image_speed = 0.5;
+        if (_fi == 7 && _fp != 7) image_speed = 0.8;
 
         // Frame 6 = momentul impactului
         if (_fi == 6 && _fp != 6) {

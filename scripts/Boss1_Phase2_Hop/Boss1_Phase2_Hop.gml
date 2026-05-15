@@ -46,7 +46,8 @@ function Boss1_Phase2_Hop() {
                 var _bot = y + (sprite_get_height(sprite_index) - sprite_get_yoffset(sprite_index)) * boss_scale - 15;
                 part_particles_create(p_sys, x - 40, _bot, p_dirt, 30);
                 part_particles_create(p_sys, x + 40, _bot, p_dirt, 30);
-                instance_create_layer(x, _bot, boss_layer, oHole);
+                var _hole_layer = layer_create(80);
+                instance_create_layer(x - 155, _bot - 220, _hole_layer, oHole);
             }
             hsp = 0;
             vsp = 0;

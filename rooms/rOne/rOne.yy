@@ -237,8 +237,8 @@
   ],
   "name":"rOne",
   "parent":{
-    "name":"Rooms",
-    "path":"folders/Rooms.yy",
+    "name":"LVL1",
+    "path":"folders/Rooms/LVL1.yy",
   },
   "parentRoom":null,
   "physicsSettings":{

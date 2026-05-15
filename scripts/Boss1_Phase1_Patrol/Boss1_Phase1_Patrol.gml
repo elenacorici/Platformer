@@ -13,6 +13,19 @@ function Boss1_Phase1_Patrol() {
             part_particles_create(p_sys, x, _bot, p_dirt, 10);
         }
 
+        // Ajuns la player în raza de atac → atacă imediat
+        if (instance_exists(oPlayer)) {
+            var _dist = point_distance(x, y, oPlayer.x, oPlayer.y);
+            if (_dist < 150) {
+                state = "idle";
+                sprite_index = sBoss1I;
+                image_index = 0;
+                image_speed = idle_image_speed;
+                attack_cooldown = 0;
+                return;
+            }
+        }
+
         // Ajuns la margine → idle scurt, întoarce direcția
         if (abs(x - patrol_origin) >= patrol_range) {
             x = patrol_origin + patrol_range * patrol_dir;

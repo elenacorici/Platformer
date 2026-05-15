@@ -1,2 +1,2 @@
 ivy_parent = noone;
-depth = 10; // în spatele player-ului (depth mare = mai în spate)
+depth = 610; // în spatele player-ului (player e la 600)

@@ -8,8 +8,8 @@
   "name":"oLevelEnd",
   "overriddenProperties":[],
   "parent":{
-    "name":"Objects",
-    "path":"folders/Objects.yy",
+    "name":"Triggere",
+    "path":"folders/Objects/Triggere.yy",
   },
   "parentObjectId":null,
   "persistent":false,

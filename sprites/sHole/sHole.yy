@@ -3,7 +3,7 @@
   "%Name":"sHole",
   "bboxMode":0,
   "bbox_bottom":133,
-  "bbox_left":31,
+  "bbox_left":29,
   "bbox_right":111,
   "bbox_top":108,
   "collisionKind":1,
