@@ -20,7 +20,8 @@ enum PLAYERSTATE
 {
 	FREE,
 	ATTACK_SLASH,
-	ATTACK_COMBO	
+	ATTACK_COMBO,
+	FINISHING_MOVE
 }
 
 state=PLAYERSTATE.FREE;
@@ -55,3 +56,10 @@ part_type_life(p_dust, 15, 25);
 
 is_stunned = false;
 stun_timer = 0;
+
+// Finishing move
+fm_phase      = -1;  // -1=inactiv, 0=walk back, 1=P1, 2=P2, 3=freeze
+fm_boss       = noone;
+fm_prev_frame = 0;
+fm_dir        = 1;
+fm_target_x   = 0;

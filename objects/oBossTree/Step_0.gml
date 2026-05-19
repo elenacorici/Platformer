@@ -13,7 +13,7 @@ switch (state)
             state        = "wake";
             sprite_index = sBossTreeWake;
             image_index  = 0;
-            image_speed  = 0.04;
+            image_speed  = 0.08;
 
             if (instance_exists(oCamera))
             {
@@ -33,7 +33,7 @@ switch (state)
             state        = "burst";
             sprite_index = sBossTreeBurst;
             image_index  = 0;
-            image_speed  = 0.1;
+            image_speed  = 0.2;
             ScreenShake(5, 90);
         }
         break;

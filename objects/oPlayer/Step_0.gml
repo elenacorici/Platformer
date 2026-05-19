@@ -1,4 +1,11 @@
  
+// Finishing move — rulează indiferent de hascontrol
+if (state == PLAYERSTATE.FINISHING_MOVE)
+{
+    PlayerState_FinishingMove();
+    exit;
+}
+
 // Stun — player blocat complet
 if (is_stunned) {
     stun_timer--;

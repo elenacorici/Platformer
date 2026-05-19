@@ -15,6 +15,6 @@ if (hp <= 0 && state != "dying" && state != "grave")
     state = "dying";
     sprite_index = sBoss1D;
     image_index = 0;
-    image_speed = 0.08;
+    image_speed = 0.13;
     hsp = 0;
 }

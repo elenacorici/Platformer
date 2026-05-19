@@ -180,6 +180,16 @@ Platformer 2D în **GameMaker Studio 2 (GML)**, tema folclor românesc.
 
 ---
 
+## FINISHING MOVE — Origini pentru recalculare
+
+| Sprite | Origin vechi | Origin nou (bottom-center) | Note |
+|--------|-------------|---------------------------|------|
+| `sPlayerStakeP2` | **(40, 48)** | neschimbat | shaft țăruș |
+| `sBoss2Die` | **(54, 30)** | **(46, 77)** | piept vechi y=30 |
+| Chest world offset | — | `boss.y - (77-30)*2.5 = boss.y - 117` | cu scale 2.5 |
+
+---
+
 ## BOSS 2 — STRIGOI
 
 ### Personaj

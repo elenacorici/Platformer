@@ -43,6 +43,8 @@ var hitByAttackNow=ds_list_create();
 var hits= instance_place_list(x,y,oEnemy, hitByAttackNow,false);
 hits += instance_place_list(x,y,oEnemyBig, hitByAttackNow,false);
 hits += instance_place_list(x,y,oBoss1, hitByAttackNow,false);
+hits += instance_place_list(x,y,oBoss2, hitByAttackNow,false);
+hits += instance_place_list(x,y,oBat,   hitByAttackNow,false);
 if(hits>0)
 {
 		for(var i=0; i<hits; i++)
@@ -54,10 +56,25 @@ if(hits>0)
 				ds_list_add(hitByAttack, hitID);
 				with(hitID)
 				{
-					// Aplică damage (aceeași logică ca glonțul)
-					hp--;
-					flash = 3;
-					hitfrom = other.attack_dir; // Folosește variabila de instanță a player-ului
+					if (object_index == oBat)
+					{
+						// Liliac — pornește animația de moarte
+						if (state != "dying" && state != "dead")
+						{
+							state        = "dying";
+							sprite_index = bat_die;
+							image_index  = 0;
+							image_speed  = 0.25;
+							hspeed       = 0;
+							vspeed       = -2;
+						}
+					}
+					else
+					{
+						hp -= 10; // TEST
+						flash   = 3;
+						hitfrom = other.attack_dir;
+					}
 				}
 			}
 		}

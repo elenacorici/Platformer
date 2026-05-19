@@ -23,10 +23,14 @@ attack_cooldown = 120;
 spit_cooldown   = 0;
 bats_cooldown   = 0;
 wolf_cooldown   = 0;
+slash_cooldown  = 0;
 last_attack     = "";
+slash_hit       = false;
 
 // Walk — mers rigid spre player
-walk_speed = 1.2;
+walk_speed        = 1.2;
+walk_timer        = 0;
+walk_dir_cooldown = 0; // cooldown înainte de a schimba direcția // countdown după recover — boss merge înainte să decidă
 
 // Recovery
 recover_timer = 0;
@@ -34,6 +38,7 @@ recover_timer = 0;
 // Wolf attack
 wolf_done = false;
 wolf_dir  = -1;
+
 
 prev_image_index = 0;
 

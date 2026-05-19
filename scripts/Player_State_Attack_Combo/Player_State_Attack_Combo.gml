@@ -27,6 +27,8 @@ function PlayerState_Attack_Combo(){
 	var hits = instance_place_list(x, y, oEnemy, hitByAttackNow, false);
 	hits += instance_place_list(x, y, oEnemyBig, hitByAttackNow, false);
 	hits += instance_place_list(x, y, oBoss1, hitByAttackNow, false);
+	hits += instance_place_list(x, y, oBoss2, hitByAttackNow, false);
+	hits += instance_place_list(x, y, oBat,   hitByAttackNow, false);
 	if (hits > 0)
 	{
 		for (var i = 0; i < hits; i++)
@@ -37,9 +39,24 @@ function PlayerState_Attack_Combo(){
 				ds_list_add(hitByAttack, hitID);
 				with (hitID)
 				{
-					hp -= 2;
-					flash = 3;
-					hitfrom = other.attack_dir;
+					if (object_index == oBat)
+					{
+						if (state != "dying" && state != "dead")
+						{
+							state        = "dying";
+							sprite_index = bat_die;
+							image_index  = 0;
+							image_speed  = 0.25;
+							hspeed       = 0;
+							vspeed       = -2;
+						}
+					}
+					else
+					{
+						hp -= 2;
+						flash   = 3;
+						hitfrom = other.attack_dir;
+					}
 				}
 			}
 		}

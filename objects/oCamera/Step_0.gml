@@ -29,7 +29,7 @@ shake_remain = max(0, shake_remain - ((1 / shake_length) * shake_magnitude));
 // Actualizare camera view — round() elimină jitter-ul sub-pixel
 camera_set_view_pos(cam, round(x - view_w_half), round(y - view_h_half));
 
-// Parallax Backgrounds
+// Parallax Backgrounds — rThree / rTunnel / BossRoom
 if (layer_exists("Par1"))
     layer_x("Par1", x / 2);
 
@@ -38,3 +38,13 @@ if (layer_exists("Par2"))
 
 if (layer_exists("Par3"))
     layer_x("Par3", x / 6);
+
+// Parallax Backgrounds — rOne / rTwo
+if (layer_exists("Mountains"))
+    layer_x("Mountains", x / 2);   // cel mai din spate — mișcare mică
+
+if (layer_exists("Trees2"))
+    layer_x("Trees2", x / 4);      // mijloc
+
+if (layer_exists("Trees"))
+    layer_x("Trees", x / 6);       // cel mai din față — mișcare mare
