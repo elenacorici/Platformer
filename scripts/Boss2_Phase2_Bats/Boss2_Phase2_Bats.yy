@@ -1,13 +1,13 @@
 {
-  "$GMScript": "v1",
-  "%Name": "Boss2_Phase2_Bats",
-  "isCompatibility": false,
-  "isDnD": false,
-  "name": "Boss2_Phase2_Bats",
-  "parent": {
-    "name": "Scripts",
-    "path": "folders/Scripts.yy"
+  "$GMScript":"v1",
+  "%Name":"Boss2_Phase2_Bats",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"Boss2_Phase2_Bats",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
   },
-  "resourceType": "GMScript",
-  "resourceVersion": "2.0"
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
 }

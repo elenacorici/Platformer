@@ -52,8 +52,8 @@
   },
   "origin":9,
   "parent":{
-    "name":"Player",
-    "path":"folders/Sprites/Player.yy",
+    "name":"Axe",
+    "path":"folders/Sprites/Player/Axe.yy",
   },
   "preMultiplyAlpha":false,
   "resourceType":"GMSprite",

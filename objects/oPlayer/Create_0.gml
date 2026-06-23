@@ -10,6 +10,22 @@ max_hp = 6;
 max_hearts = 3;
 hp_temp = 6;   // pentru scădere graduală
 heart_shake = 0;
+chamomile_count = 0;
+has_axe = true;  // TODO: pune false cand oAxe e plasat in rOne
+has_bow = false;
+current_weapon = "axe"; // "axe" sau "bow"
+has_opinci       = false;
+opinci_state     = "ready";    // "ready", "active", "cooldown"
+opinci_timer     = 0;
+opinci_boost_sp  = 7;          // viteza cu boost
+opinci_active_t  = 300;        // 5 secunde la 60fps
+opinci_cooldown_t = 240;       // 4 secunde cooldown
+
+bow_phase        = "draw";
+bow_charge_timer = 0;
+bow_charge_max   = 60;
+bow_aim_dir      = 0;
+keyAttack_held   = false;
 flash = 0;
 hitfrom = 0;
 image_xscale=1.30;
@@ -21,7 +37,8 @@ enum PLAYERSTATE
 	FREE,
 	ATTACK_SLASH,
 	ATTACK_COMBO,
-	FINISHING_MOVE
+	FINISHING_MOVE,
+	ATTACK_BOW
 }
 
 state=PLAYERSTATE.FREE;

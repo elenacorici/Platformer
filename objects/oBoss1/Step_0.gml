@@ -76,6 +76,7 @@ if (state == "dying")
         sprite_index = sBossGrave;
         image_index = 0;
         image_speed = 0.07;
+        instance_create_layer(x, y - 48, layer, oBow);
     }
 }
 

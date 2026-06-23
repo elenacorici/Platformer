@@ -1,13 +1,13 @@
 {
-  "$GMScript": "v1",
-  "%Name": "Boss2_Phase1_Spit",
-  "isCompatibility": false,
-  "isDnD": false,
-  "name": "Boss2_Phase1_Spit",
-  "parent": {
-    "name": "Scripts",
-    "path": "folders/Scripts.yy"
+  "$GMScript":"v1",
+  "%Name":"Boss2_Phase1_Spit",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"Boss2_Phase1_Spit",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
   },
-  "resourceType": "GMScript",
-  "resourceVersion": "2.0"
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
 }

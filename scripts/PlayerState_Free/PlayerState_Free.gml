@@ -69,7 +69,7 @@ function PlayerState_Free(){
 		else
 			y += vsp;
 		
-		sprite_index = sPlayerRoll;
+		sprite_index = (current_weapon == "bow") ? sPlayerBowR : sPlayerRoll;
 		image_speed = 1;
 		
 		if (animation_end())
@@ -79,9 +79,32 @@ function PlayerState_Free(){
 	}
 	else
 	{
+		// --- Opinci: timer si activare ---
+		if (has_opinci) {
+			if (key_sprint && opinci_state == "ready") {
+				opinci_state = "active";
+				opinci_timer = opinci_active_t;
+			}
+			if (opinci_state == "active") {
+				opinci_timer--;
+				if (opinci_timer <= 0) {
+					opinci_state = "cooldown";
+					opinci_timer = opinci_cooldown_t;
+				}
+			} else if (opinci_state == "cooldown") {
+				opinci_timer--;
+				if (opinci_timer <= 0) {
+					opinci_state = "ready";
+					opinci_timer = 0;
+				}
+			}
+		}
+
 		// --- Mișcare normală
+		var _is_sprinting = (has_opinci && opinci_state == "active");
+		var _cur_walksp   = _is_sprinting ? opinci_boost_sp : walksp;
 		var move = key_right - key_left;
-		hsp = is_crouching ? 0 : (move * walksp);
+		hsp = is_crouching ? 0 : (move * _cur_walksp);
 		
 		if (on_ground)
 			jumps_left = jumps_max;
@@ -135,17 +158,24 @@ function PlayerState_Free(){
 			y = y + vsp;
 		
 		//Animation
+		var _bow = (current_weapon == "bow");
+		var _spr_idle   = _bow ? sPlayerBowI  : sPlayerI;
+		var _spr_run    = _bow ? (_is_sprinting ? sPlayerBowRun : sPlayerBowW)
+		                       : (_is_sprinting ? sPlayerRun    : sPlayerR);
+		var _spr_jump   = _bow ? sPlayerBowJ  : sPlayerJ;
+		var _spr_crouch = _bow ? sPlayerBowC  : sPlayerC;
+
 		if (!place_meeting(x, y + 1, oWall))
 		{
 			image_speed = 1;
-			sprite_index = sPlayerJ;
+			sprite_index = _spr_jump;
 		}
 		else if (is_crouching)
 		{
-			sprite_index = sPlayerC;
+			sprite_index = _spr_crouch;
 			if (!was_crouching)
 				image_index = 0;
-			
+
 			if (image_index < 3)
 				image_speed = 0.3;
 			else
@@ -156,14 +186,16 @@ function PlayerState_Free(){
 		}
 		else
 		{
-			image_speed = 1;
-			if (was_crouching && !is_crouching && sprite_index == sPlayerC)
+			if (was_crouching && !is_crouching && (sprite_index == sPlayerC || sprite_index == sPlayerBowC))
 				image_index = 0;
-			
-			if (sign(hsp) == 0)
-				sprite_index = sPlayer;
-			else
-				sprite_index = sPlayerR;
+
+			if (sign(hsp) == 0) {
+				sprite_index = _spr_idle;
+				image_speed = 0.1;
+			} else {
+				sprite_index = _spr_run;
+				image_speed = 1;
+			}
 		}
 		
 		if (sign(hsp) != 0)
@@ -172,6 +204,8 @@ function PlayerState_Free(){
 	
 	was_crouching = is_crouching;
 	
-	if (keyAttack && roll_timer <= 0 && !is_crouching)
+	if (keyAttack && roll_timer <= 0 && !is_crouching && has_axe && current_weapon == "axe")
 		state = PLAYERSTATE.ATTACK_SLASH;
+	if (keyAttack && roll_timer <= 0 && !is_crouching && has_bow && current_weapon == "bow")
+		state = PLAYERSTATE.ATTACK_BOW;
 }

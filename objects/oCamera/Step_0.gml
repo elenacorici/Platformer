@@ -1,5 +1,9 @@
 /// @description actualizare camera
 
+// F4 toggle fullscreen
+if (keyboard_check_pressed(vk_f4))
+    window_set_fullscreen(!window_get_fullscreen());
+
 // Actualizare destinatie
 if (instance_exists(follow))
 {
@@ -18,8 +22,13 @@ letterbox_current += (letterbox_target - letterbox_current) / 20;
 x += (xTo - x) / 25;
 y += (yTo - y) / 25;
 
-x = clamp(x, view_w_half + buff, room_width  - view_w_half - buff);
-y = clamp(y, view_h_half + buff, room_height - view_h_half - buff);
+// Clamp robust: daca room-ul e mai mic decat view-ul, centreaza camera
+var _cx_min = min(view_w_half + buff, room_width  * 0.5);
+var _cx_max = max(room_width  - view_w_half - buff, room_width  * 0.5);
+var _cy_min = min(view_h_half + buff, room_height * 0.5);
+var _cy_max = max(room_height - view_h_half - buff, room_height * 0.5);
+x = clamp(x, _cx_min, _cx_max);
+y = clamp(y, _cy_min, _cy_max);
 
 x += random_range(-shake_remain, shake_remain);
 y += random_range(-shake_remain, shake_remain);

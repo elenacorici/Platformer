@@ -1,13 +1,13 @@
 {
-  "$GMScript": "v1",
-  "%Name": "Boss2_DecideAction",
-  "isCompatibility": false,
-  "isDnD": false,
-  "name": "Boss2_DecideAction",
-  "parent": {
-    "name": "Scripts",
-    "path": "folders/Scripts.yy"
+  "$GMScript":"v1",
+  "%Name":"Boss2_DecideAction",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"Boss2_DecideAction",
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
   },
-  "resourceType": "GMScript",
-  "resourceVersion": "2.0"
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
 }
