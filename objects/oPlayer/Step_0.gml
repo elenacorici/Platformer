@@ -20,14 +20,39 @@ key_left=keyboard_check(vk_left) || keyboard_check(ord("A"));
 key_right=keyboard_check(vk_right) || keyboard_check(ord("D"));
 key_jump=keyboard_check(vk_space);
 key_jump_pressed=keyboard_check_pressed(vk_space);
-keyAttack      = mouse_check_button_pressed(mb_left);
-keyAttack_held = mouse_check_button(mb_left);
-key_sprint     = keyboard_check_pressed(ord("1"));
+keyAttack       = mouse_check_button_pressed(mb_left);
+key_sprint      = keyboard_check_pressed(ord("1"));
+key_bow         = keyboard_check(ord("E"));
+key_bow_pressed = keyboard_check_pressed(ord("E"));
+key_lockon      = keyboard_check_pressed(ord("Q"));
 
 // Switch armă cu B (doar dacă are arcul)
 if (keyboard_check_pressed(ord("B")) && has_bow) {
     current_weapon = (current_weapon == "axe") ? "bow" : "axe";
 }
+
+// Lock-on cu Q (doar cu arcul echipat)
+if (key_lockon && has_bow && current_weapon == "bow") {
+    if (bow_target != noone) {
+        bow_target = noone; // Q din nou = anuleaza
+    } else {
+        var _types = [oEnemy, oEnemyBig, oBoss1, oBoss2];
+        var _nearest = noone;
+        var _min_d   = 99999;
+        for (var _i = 0; _i < array_length(_types); _i++) {
+            var _inst = instance_nearest(x, y, _types[_i]);
+            if (_inst != noone) {
+                var _d = point_distance(x, y, _inst.x, _inst.y);
+                if (_d < _min_d) { _min_d = _d; _nearest = _inst; }
+            }
+        }
+        bow_target = _nearest;
+    }
+}
+
+// Verifica daca target ul mai exista
+if (bow_target != noone && !instance_exists(bow_target))
+    bow_target = noone;
 
 switch (state)
 {

@@ -23,9 +23,9 @@ opinci_cooldown_t = 240;       // 4 secunde cooldown
 
 bow_phase        = "draw";
 bow_charge_timer = 0;
-bow_charge_max   = 60;
+bow_charge_level = 0;    // 0=fail, 1=normal, 2=full
 bow_aim_dir      = 0;
-keyAttack_held   = false;
+bow_target       = noone;
 flash = 0;
 hitfrom = 0;
 image_xscale=1.30;

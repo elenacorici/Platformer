@@ -29,7 +29,8 @@ function PlayerState_Attack_Slash(){
 if (sprite_index != sPlayerA1)
 {
 	sprite_index = sPlayerA1;
-	image_index = 0;
+	image_index  = 0;
+	image_speed  = 1;
 	ds_list_clear(hitByAttack);
 }
 

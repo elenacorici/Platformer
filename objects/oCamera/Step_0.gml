@@ -8,7 +8,7 @@ if (keyboard_check_pressed(vk_f4))
 if (instance_exists(follow))
 {
     xTo = follow.x;
-    yTo = follow.y;
+    yTo = follow.y - 36; // y e acum la picioare, offsetam cu jumatate din inaltime ca sa centram corpul
 }
 
 // ── LETTERBOX tunel — crește pe măsură ce player avansează ──

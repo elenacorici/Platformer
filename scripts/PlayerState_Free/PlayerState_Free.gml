@@ -206,6 +206,6 @@ function PlayerState_Free(){
 	
 	if (keyAttack && roll_timer <= 0 && !is_crouching && has_axe && current_weapon == "axe")
 		state = PLAYERSTATE.ATTACK_SLASH;
-	if (keyAttack && roll_timer <= 0 && !is_crouching && has_bow && current_weapon == "bow")
+	if (key_bow_pressed && roll_timer <= 0 && !is_crouching && has_bow && current_weapon == "bow")
 		state = PLAYERSTATE.ATTACK_BOW;
 }

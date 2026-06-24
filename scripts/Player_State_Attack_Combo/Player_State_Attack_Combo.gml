@@ -16,7 +16,8 @@ function PlayerState_Attack_Combo(){
 	if (sprite_index != sPlayerA2)
 	{
 		sprite_index = sPlayerA2;
-		image_index = 0;
+		image_index  = 0;
+		image_speed  = 1;
 		ds_list_clear(hitByAttack);
 	}
 	
