@@ -16,11 +16,13 @@ if (is_stunned) {
 }
 else if(hascontrol) {
 //Get Player Input
-key_left=keyboard_check(vk_left) || keyboard_check(ord("A"));
-key_right=keyboard_check(vk_right) || keyboard_check(ord("D"));
+var _raw_left  = keyboard_check(vk_left)  || keyboard_check(ord("A"));
+var _raw_right = keyboard_check(vk_right) || keyboard_check(ord("D"));
+key_left  = controls_inverted ? _raw_right : _raw_left;
+key_right = controls_inverted ? _raw_left  : _raw_right;
 key_jump=keyboard_check(vk_space);
 key_jump_pressed=keyboard_check_pressed(vk_space);
-keyAttack       = mouse_check_button_pressed(mb_left);
+keyAttack       = keyboard_check_pressed(ord("Z"));
 key_sprint      = keyboard_check_pressed(ord("1"));
 key_bow         = keyboard_check(ord("E"));
 key_bow_pressed = keyboard_check_pressed(ord("E"));
@@ -67,6 +69,9 @@ switch (state)
 		break;
 	case PLAYERSTATE.ATTACK_BOW:
 		PlayerState_BowAttack();
+		break;
+	case PLAYERSTATE.CLIMBING:
+		PlayerState_Climbing();
 		break;
 }
 

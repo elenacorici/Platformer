@@ -29,24 +29,80 @@ function EnemyState_Chase(_ctx)
 /// @func EnemyState_Attack()
 function EnemyState_Attack()
 {
-    hsp = 0;
+    if (Enemy_IsWolfEnemy())
+    {
+        sprite_index = sWolfA;
+        image_speed = attack_anim_speed;
 
+        // Prima frame: initializeaza saltul
+        if (!wolf_jump_active)
+        {
+            wolf_jump_active = true;
+            wolf_jump_dir = instance_exists(oPlayer) ? sign(oPlayer.x - x) : patrol_dir;
+            if (wolf_jump_dir == 0) wolf_jump_dir = patrol_dir;
+            vsp = -5;
+            hsp = wolf_jump_dir * 3.5;
+        }
+
+        // Miscare orizontala fara edge detection
+        if (place_meeting(x + hsp, y, oWall))
+        {
+            while (!place_meeting(x + sign(hsp), y, oWall))
+                x += sign(hsp);
+            hsp = 0;
+        }
+        else
+            x += hsp;
+
+        Enemy_VerticalResolve();
+
+        // Hitbox pe durata saltului
+        var _old_mask = mask_index;
+        mask_index = sWolfAHB;
+        var _plist = ds_list_create();
+        var _nhits = instance_place_list(x, y, oPlayer, _plist, false);
+        for (var _hi = 0; _hi < _nhits; _hi++)
+        {
+            var _pid = _plist[| _hi];
+            if (ds_list_find_index(hitPlayerThisAttack, _pid) == -1)
+            {
+                ds_list_add(hitPlayerThisAttack, _pid);
+                with (_pid)
+                {
+                    hp--;
+                    hp = max(0, hp);
+                    flash = 3;
+                    hitfrom = point_direction(other.x, other.y, x, y);
+                }
+            }
+        }
+        ds_list_destroy(_plist);
+        mask_index = _old_mask;
+
+        // Aterizare: vsp >= 0 inseamna ca coboara
+        if (vsp >= 0 && place_meeting(x, y + 1, oWall))
+        {
+            wolf_jump_active = false;
+            hsp = 0;
+            patrol_dir = wolf_jump_dir;
+            state = ENEMYSTATE.PATROL;
+            image_index = 0;
+            attack_cooldown = attack_cooldown_frames;
+            idle_break_cooldown = idle_break_cooldown_max;
+        }
+        return;
+    }
+
+    // oEnemy clasic
+    hsp = 0;
     _Enemy_HorizontalResolve();
     Enemy_VerticalResolve();
 
-    if (Enemy_IsWolfEnemy())
-        sprite_index = sWolfA;
-    else
-        sprite_index = sEnemyA;
+    sprite_index = sEnemyA;
     image_speed = attack_anim_speed;
 
-    // Hitbox
     var _old_mask = mask_index;
-    if (Enemy_IsWolfEnemy())
-        mask_index = sWolfAHB;
-    else
-        mask_index = sEnemyAHitBox;
-
+    mask_index = sEnemyAHitBox;
     var _plist = ds_list_create();
     var _nhits = instance_place_list(x, y, oPlayer, _plist, false);
     for (var _hi = 0; _hi < _nhits; _hi++)
@@ -79,18 +135,36 @@ function EnemyState_Attack()
 
 function _Enemy_HorizontalResolve()
 {
-    var _edge_dir = (sign(hsp) != 0) ? sign(hsp) : patrol_dir;
-    if (idle_break_phase == 0 && grounded && afraidOfHeights && !place_meeting(x + check_distance * _edge_dir, y + 1, oWall))
+    var _edge_dir    = (sign(hsp) != 0) ? sign(hsp) : patrol_dir;
+    var _has_patrol  = variable_instance_exists(id, "patrol_dist") && patrol_dist > 0;
+
+    if (_has_patrol)
     {
-        hsp = -hsp;
-        patrol_dir = -patrol_dir;
+        // Distanta fixa de patrula setata din Creation Code
+        var _next_x = x + hsp;
+        if (_next_x < x_patrol_start || _next_x > x_patrol_start + patrol_dist)
+        {
+            hsp        = -hsp;
+            patrol_dir = -patrol_dir;
+        }
+    }
+    else
+    {
+        // Detectie margine platforma (comportament normal)
+        if (idle_break_phase == 0 && grounded && afraidOfHeights
+        &&  !place_meeting(x + check_distance * _edge_dir, y + 1, oWall))
+        {
+            hsp        = -hsp;
+            patrol_dir = -patrol_dir;
+        }
     }
 
+    // Coliziune perete — mereu activa
     if (place_meeting(x + hsp, y, oWall))
     {
         while (!place_meeting(x + sign(hsp), y, oWall))
             x += sign(hsp);
-        hsp = -hsp;
+        hsp        = -hsp;
         patrol_dir = -patrol_dir;
     }
     x += hsp;
@@ -101,6 +175,24 @@ function _Enemy_UpdateLocomotionAnim()
 {
     if (Enemy_IsWolfEnemy())
     {
+        // Sleep override — ruleaza inaintea oricarei alte animatii
+        if (sleep_phase > 0)
+        {
+            grounded = true;
+            if (sleep_phase == 1)
+            {
+                sprite_index = sWolf_sitting;
+                image_speed = 0.4;
+                if (animation_end()) { sleep_phase = 2; image_index = 0; }
+            }
+            else // sleep_phase == 2
+            {
+                sprite_index = sWolf_sleep;
+                image_speed = 0.06;
+            }
+            return;
+        }
+
         if (!place_meeting(x, y + 1, oWall))
         {
             if (idle_break_phase != 0) { idle_break_phase = 0; idle_break_breath_timer = 0; }
@@ -111,14 +203,13 @@ function _Enemy_UpdateLocomotionAnim()
         else if (idle_break_phase == 1)
         {
             grounded = true;
-            sprite_index = sWolf;
-            var _m = (state == ENEMYSTATE.PATROL) ? idle_patrol_idle_anim_mult : 1;
-            image_speed = idle_breath_image_speed * _m;
+            sprite_index = sWolf_idle;
+            image_speed = 0.06;
         }
         else if (idle_break_phase == 2)
         {
             grounded = true;
-            sprite_index = sWolf;
+            sprite_index = sWolf_idle;
             var _m2 = (state == ENEMYSTATE.PATROL) ? idle_patrol_idle_anim_mult : 1;
             image_speed = idle_scratch_image_speed * _m2;
         }
@@ -126,10 +217,10 @@ function _Enemy_UpdateLocomotionAnim()
         {
             grounded = true;
             image_speed = 0.25;
-            sprite_index = (sign(hsp) == 0) ? sWolf : sWolfR;
+            sprite_index = (sign(hsp) == 0) ? sWolf_idle : sWolfR;
         }
 
-        if (idle_break_phase == 2 && sprite_index == sWolf && animation_end())
+        if (idle_break_phase == 2 && sprite_index == sWolf_idle && animation_end())
         {
             idle_break_phase = 0;
             idle_break_cooldown = irandom_range(idle_break_cooldown_min, idle_break_cooldown_max);

@@ -87,6 +87,7 @@ if (state == "dizzy")
             _p.fm_target_x   = x - 141 * _dir; // distanța corectă pentru P2
             _p.hsp           = 0;
             _p.vsp           = 0;
+            _p.y            += 6; // corectie vizuala walk-back
             _p.depth         = -200; // în fața boss-ului
 
             // Camera se blochează între player și boss
@@ -236,27 +237,34 @@ if (state != "dizzy" && state != "dying" && state != "grave")
     Boss2_Phase4_Slash();
 }
 
-// ── DIZZY / DYING — tranziții HP ─────────────────────────
-if (hp <= 1 && state != "dizzy" && state != "dying" && state != "grave")
+// ── Tranzitii HP ─────────────────────────────────────────
+if (state != "dizzy" && state != "dying" && state != "grave")
 {
-    hp           = 1;
-    state        = "dizzy";
-    sprite_index = sBoss2Dizzy;
-    image_index  = 0;
-    image_speed  = 0.015; // TEST foarte lent
-    image_angle  = 0;
-    hsp          = 0;
-    attack_cooldown = 99999;
-}
-
-if (hp <= 0 && state != "dying" && state != "grave")
-{
-    state        = "dying";
-    sprite_index = sBoss2Die;
-    image_index  = 0;
-    image_speed  = 0.01; // TEST foarte lent
-    image_angle  = 0;
-    hsp          = 0;
+    // Trigger atac lup la hp <= 20 (o singura data)
+    if (hp <= 20 && !wolf_triggered
+    &&  state != "attack_wolf_spin" && state != "attack_wolf_offscreen" && state != "attack_wolf_reappear")
+    {
+        wolf_triggered   = true;
+        state            = "attack_wolf_spin";
+        sprite_index     = sBoss2Attack3P1;
+        image_index      = 0;
+        image_speed      = 0.2;
+        prev_image_index = 0;
+        last_attack      = "attack_wolf";
+        hsp              = 0;
+        wolf_dir         = instance_exists(oPlayer) ? sign(oPlayer.x - x) : -1;
+    }
+    // Dizzy la hp <= 10
+    else if (hp <= 10)
+    {
+        hp              = 10;
+        state           = "dizzy";
+        sprite_index    = sBoss2Dizzy;
+        image_index     = 0;
+        image_speed     = 0.25;
+        hsp             = 0;
+        attack_cooldown = 99999;
+    }
 }
 
 // ── Scale și flip corect pentru animația de moarte ───────
@@ -269,10 +277,12 @@ if (state == "dying" || state == "grave")
 // ── DYING animation ───────────────────────────────────────
 if (state == "dying")
 {
-    // Frame-urile 8-15 (lumini) — mai lente și dramatice
+    // Frame-urile 8-9 — dramatice și lente; de la 10 mai rapid
     var _fi = floor(image_index);
-    if (_fi >= 8 && _fi <= 15)
+    if (_fi >= 8 && _fi <= 9)
         image_speed = 0.04; // dramatic
+    else if (_fi >= 10)
+        image_speed = 0.2;  // mai rapid dupa frame 10
     else if (image_speed != 0)
         image_speed = 0.1;  // normal
 

@@ -4,7 +4,7 @@ function PlayerState_Attack_Slash(){
 	// Aplică gravitația și coliziunile verticale în timpul atacului
 	// IMPORTANT: Verifică coliziunea cu mask-ul normal, nu cu hitbox-ul de atac
 	var old_mask = mask_index;
-	mask_index = -1; // Folosește mask-ul normal pentru coliziuni
+	mask_index = sPlayer; // Folosește mask-ul normal pentru coliziuni
 	
 	vsp= vsp + grv;
 	
@@ -15,14 +15,13 @@ function PlayerState_Attack_Slash(){
 		{
 			y=y+sign(vsp);
 		}
-		
 		vsp=0;
 	}
 	else
 	{
-		// Aplică mișcarea verticală doar dacă nu există coliziune
-		y= y + vsp;
+		y = y + vsp;
 	}
+	y = floor(y); // previne acumularea de y fractionar
 	
 //Start attack
 
@@ -46,6 +45,9 @@ hits += instance_place_list(x,y,oEnemyBig, hitByAttackNow,false);
 hits += instance_place_list(x,y,oBoss1, hitByAttackNow,false);
 hits += instance_place_list(x,y,oBoss2, hitByAttackNow,false);
 hits += instance_place_list(x,y,oBat,   hitByAttackNow,false);
+hits += instance_place_list(x,y,oBoss31, hitByAttackNow,false);
+hits += instance_place_list(x,y,oBoss32, hitByAttackNow,false);
+hits += instance_place_list(x,y,oBoss33, hitByAttackNow,false);
 if(hits>0)
 {
 		for(var i=0; i<hits; i++)
@@ -70,6 +72,16 @@ if(hits>0)
 							vspeed       = -2;
 						}
 					}
+					else if (object_index == oBoss31 || object_index == oBoss32 || object_index == oBoss33)
+					{
+						if (invincible_timer <= 0 && !is_dead)
+						{
+							hp -= 1;
+							flash            = 6;
+							hitfrom          = other.attack_dir;
+							invincible_timer = 45;
+						}
+					}
 					else
 					{
 						hp -= 10; // TEST
@@ -82,14 +94,38 @@ if(hits>0)
 }
 ds_list_destroy(hitByAttackNow);
 
+// Detectie Iele prin distanta (bbox sIele1Idle = 9px, prea ingust pt. hitbox overlap)
+var _iele_range = 80;
+var _iele_obj = [oBoss31, oBoss32, oBoss33];
+for (var _ii = 0; _ii < 3; _ii++)
+{
+    with (_iele_obj[_ii])
+    {
+        if (!is_dead
+        &&  ds_list_find_index(other.hitByAttack, id) == -1
+        &&  point_distance(other.x, other.y, x, y) < _iele_range)
+        {
+            ds_list_add(other.hitByAttack, id);
+            if (invincible_timer <= 0)
+            {
+                hp -= 1;
+                flash    = 6;
+                hitfrom  = other.attack_dir;
+                invincible_timer = 45;
+            }
+        }
+    }
+}
+
 if (keyAttack && image_index > 3 && combo_timer == 0)
 	combo_timer = combo_window;
 if (combo_timer > 0)
 	combo_timer--;
 
+
 if (animation_end())
 {
-	mask_index = -1;
+	mask_index = sPlayer;
 	if (combo_timer > 0)
 	{
 		combo_count = 1;
@@ -104,7 +140,6 @@ if (animation_end())
 }
 else
 {
-	// Păstrează mask-ul de atac în timpul animației
 	mask_index = sPlayerA1HB;
 }
 

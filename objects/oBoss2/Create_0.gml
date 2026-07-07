@@ -1,6 +1,6 @@
 depth       = 50;
-hp          = 20;
-max_hp      = 20;
+hp          = 30;
+max_hp      = 30;
 flash       = 0;
 hitfrom     = 0;
 
@@ -36,8 +36,9 @@ walk_dir_cooldown = 0; // cooldown înainte de a schimba direcția // countdown 
 recover_timer = 0;
 
 // Wolf attack
-wolf_done = false;
-wolf_dir  = -1;
+wolf_done     = false;
+wolf_dir      = -1;
+wolf_triggered = false; // flag: atacul cu lupul s-a declansat deja
 
 
 prev_image_index = 0;

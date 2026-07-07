@@ -37,7 +37,7 @@ function PlayerState_BowAttack() {
 	&&  sprite_index != sPlayerBowA1Release) {
 		sprite_index     = sPlayerBowA1Charge;
 		image_index      = 0;
-		image_speed      = 0.15;
+		image_speed      = 0.25;
 		bow_phase        = "draw";
 		bow_charge_timer = 0;
 		bow_charge_level = 0;
@@ -46,7 +46,7 @@ function PlayerState_BowAttack() {
 	// --- DRAW ---
 	if (bow_phase == "draw") {
 		sprite_index = sPlayerBowA1Charge;
-		image_speed  = 0.15;
+		image_speed  = 0.30;
 
 		if (!key_bow) {
 			var _prog = image_index / max(1, sprite_get_number(sPlayerBowA1Charge) - 1);
@@ -55,7 +55,7 @@ function PlayerState_BowAttack() {
 			sprite_index = sPlayerBowA1Release;
 			image_index  = 0;
 			image_speed  = 0.4;
-			_spawn_arrow();
+			_spawn_arrow(0); // intotdeauna o singura sageata la release prematur
 
 	// --- HOLD ---
 	} else if (animation_end()) {
@@ -75,7 +75,14 @@ function PlayerState_BowAttack() {
 			sprite_index = sPlayerBowA1Release;
 			image_index  = 0;
 			image_speed  = 0.4;
-			_spawn_arrow();
+			if (bow_charge_level >= 2) {
+				// Triple shot — evantai de 3 sageti
+				_spawn_arrow(0);
+				_spawn_arrow(-15);
+				_spawn_arrow(15);
+			} else {
+				_spawn_arrow(0);
+			}
 		}
 
 	// --- RELEASE ---
@@ -91,43 +98,39 @@ function PlayerState_BowAttack() {
 	}
 }
 
-function _spawn_arrow() {
+function _spawn_arrow(_angle_offset) {
 	var _sx = x + 15 * image_xscale;
 	var _sy = y - 34;
 
 	var _spd, _dmg, _grav;
 	switch (bow_charge_level) {
 		case 0: _spd = 3;  _dmg = 0; _grav = 0.4;  break; // fail
-		case 1: _spd = 6;  _dmg = 1; _grav = 0.15; break; // normal
-		case 2: _spd = 10; _dmg = 2; _grav = 0.15; break; // full
+		case 1: _spd = 10; _dmg = 1; _grav = 0.15; break; // normal
+		case 2: _spd = 16; _dmg = 2; _grav = 0.12; break; // full
 	}
 
 	var _dir = bow_aim_dir;
 
-	// Calcul balistic cand exista target locked
-	if (bow_target != noone && instance_exists(bow_target) && bow_charge_level > 0) {
+	// Calcul balistic doar pentru sageata centrala (fara offset)
+	if (_angle_offset == 0 && bow_target != noone && instance_exists(bow_target) && bow_charge_level > 0) {
 		var _dx      = bow_target.x - _sx;
-		var _adx     = abs(_dx); // folosim valoarea absoluta in formula
+		var _adx     = abs(_dx);
 		var _dy_math = -(bow_target.y - _sy);
 		var _g       = _grav;
 		var _v       = _spd;
 		var _disc    = _v*_v*_v*_v - _g * (_g*_adx*_adx + 2*_dy_math*_v*_v);
 
 		if (_disc >= 0 && _adx > 2) {
-			// Target reachable - low arc, unghi pozitiv = sus
 			var _tan_low = (_v*_v - sqrt(_disc)) / (_g * _adx);
-			var _ang     = radtodeg(arctan(_tan_low)); // unghi fata de orizontala (pozitiv = sus)
+			var _ang     = radtodeg(arctan(_tan_low));
 			_dir = (_dx >= 0) ? _ang : (180 - _ang);
 			if (_dir < 0) _dir += 360;
 		} else {
-			// Target prea departe = fail
-			bow_charge_level = 0;
-			_spd  = 3;
-			_dmg  = 0;
-			_grav = 0.4;
-			_dir  = bow_aim_dir;
+			_dir = bow_aim_dir;
 		}
 	}
+
+	_dir += _angle_offset;
 
 	var _a           = instance_create_layer(_sx, _sy, layer, oArrow);
 	_a.direction     = _dir;

@@ -304,8 +304,8 @@
   ],
   "name":"rThree_1",
   "parent":{
-    "name":"LVL2",
-    "path":"folders/Rooms/LVL2.yy",
+    "name":"LVL2-nef",
+    "path":"folders/Rooms/LVL2-nef.yy",
   },
   "parentRoom":null,
   "physicsSettings":{
@@ -336,7 +336,7 @@
   ],
   "viewSettings":{
     "clearDisplayBuffer":true,
-    "clearViewBackground":false,
+    "clearViewBackground":true,
     "enableViews":true,
     "inheritViewSettings":false,
   },

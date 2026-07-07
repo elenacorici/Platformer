@@ -2,13 +2,23 @@
 if (hit_cooldown > 0)
     hit_cooldown--;
 
-// Animație de scuturare la lovire
-if (shake_timer > 0)
+// Leganare continua cand playerul e agatat (flag setat de player in frame curent sau anterior)
+if (being_climbed)
+{
+    sway_t++;
+    image_angle  = sin(sway_t * 0.06) * 4;
+    being_climbed = false; // reset — PlayerState_Climbing il re-seteaza fiecare frame
+}
+else if (shake_timer > 0)
 {
     image_angle = sin(shake_timer * 0.3) * 3;
     shake_timer--;
-    if (shake_timer <= 0)
-        image_angle = 0;
+    if (shake_timer <= 0) { image_angle = 0; sway_t = 0; }
+}
+else
+{
+    image_angle = 0;
+    sway_t      = 0;
 }
 
 // Rise complet după a 2-a lovitură

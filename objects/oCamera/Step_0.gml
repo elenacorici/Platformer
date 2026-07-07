@@ -1,18 +1,20 @@
 /// @description actualizare camera
 
-// F4 toggle fullscreen
-if (keyboard_check_pressed(vk_f4))
-    window_set_fullscreen(!window_get_fullscreen());
+// F4 intra in fullscreen, Esc iesi din fullscreen
+if (keyboard_check_pressed(vk_f4) && !window_get_fullscreen())
+    window_set_fullscreen(true);
+if (keyboard_check_pressed(vk_escape) && window_get_fullscreen())
+    window_set_fullscreen(false);
 
 // Actualizare destinatie
 if (instance_exists(follow))
 {
     xTo = follow.x;
-    yTo = follow.y - 36; // y e acum la picioare, offsetam cu jumatate din inaltime ca sa centram corpul
+    yTo = follow.y - 36 + cam_y_offset;
 }
 
 // ── LETTERBOX tunel — crește pe măsură ce player avansează ──
-if (room == rTunnel && instance_exists(oPlayer))
+if ((room == rTunnel || room == rTunnel_1 || room == BossRoom || room == rThree_1) && instance_exists(oPlayer))
     letterbox_target = (oPlayer.x / room_width) * letterbox_max;
 else
     letterbox_target = 0;
@@ -47,6 +49,7 @@ if (layer_exists("Par2"))
 
 if (layer_exists("Par3"))
     layer_x("Par3", x / 6);
+
 
 // Parallax Backgrounds — rOne / rTwo
 if (layer_exists("Mountains"))

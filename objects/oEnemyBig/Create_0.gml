@@ -10,7 +10,13 @@ hsp = walksp;
 check_distance = 60;
 
 // Wolf este mare vizual dar trebuie bbox mai mic pentru coliziuni
-mask_index = sEnemy; // Folosește bbox-ul de la Enemy pentru coliziuni mai precise
+mask_index = sWolfR;
+wolf_draw_oy = 0;
+wolf_jump_active = false;
+wolf_jump_dir    = 0;
+
+sight_range    = 500;
+attack_range   = 200;
 
 // Vizual — Enemy_UpdateFacing folosește size
 if (object_index == oEnemyBig)

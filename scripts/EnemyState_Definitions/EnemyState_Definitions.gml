@@ -7,10 +7,10 @@ enum ENEMYSTATE
 }
 
 /// @func Enemy_IsWolfEnemy()
-/// @desc Ramuri sprite/hitbox pentru lup (oEnemyBig / oWolfSmall).
+/// @desc Ramuri sprite/hitbox pentru lup (oEnemyBig).
 function Enemy_IsWolfEnemy()
 {
-	return object_index == oEnemyBig || object_index == oWolfSmall;
+	return object_index == oEnemyBig;
 }
 
 /// @func Enemy_VerticalResolve()

@@ -38,7 +38,8 @@ enum PLAYERSTATE
 	ATTACK_SLASH,
 	ATTACK_COMBO,
 	FINISHING_MOVE,
-	ATTACK_BOW
+	ATTACK_BOW,
+	CLIMBING
 }
 
 state=PLAYERSTATE.FREE;
@@ -51,6 +52,7 @@ roll_dir = 1;
 roll_timer = 0;
 roll_duration = 60;
 roll_speed = 5;
+fast_falling = false;
 
 jumps_max = 2;
 jumps_left = 2;
@@ -71,8 +73,21 @@ part_type_direction(p_dust, 0, 360, 0, 30);
 part_type_gravity(p_dust, 0.2, 270);
 part_type_life(p_dust, 15, 25);
 
-is_stunned = false;
-stun_timer = 0;
+is_stunned      = false;
+stun_timer      = 0;
+knockback_hsp    = 0;
+knockback_timer  = 0;
+pushed_dir       = 0;   // directia in care e impins (1 sau -1)
+pushed_timer     = 0;   // cat timp e in idle impins
+post_push_timer  = 0;   // cat timp merge 2 pasi dupa push
+
+// Hora
+hora_pull         = false;
+hora_pull_x       = 0;
+hora_stunned      = false;
+hora_stun_timer   = 0;
+controls_inverted = false;
+invert_timer      = 0;
 
 // Finishing move
 fm_phase      = -1;  // -1=inactiv, 0=walk back, 1=P1, 2=P2, 3=freeze
@@ -80,3 +95,4 @@ fm_boss       = noone;
 fm_prev_frame = 0;
 fm_dir        = 1;
 fm_target_x   = 0;
+climb_lock    = 0;

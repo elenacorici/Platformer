@@ -15,11 +15,14 @@ function PlayerState_FinishingMove()
 
         if (abs(_diff) > 3) // nu a ajuns încă
         {
-            // Mers înapoi animat
-            sprite_index = sPlayerR;
-            image_speed  = 0.13;
-            x += sign(_diff) * min(abs(_diff), 2); // max 2px/frame = pași lenți
-            image_xscale = (fm_dir > 0) ? 1 : -1;  // față spre boss în timp ce merge înapoi
+            // Mers înapoi animat — reseteaza sprite la prima intrare
+            if (sprite_index != sPlayerR) {
+                sprite_index = sPlayerR;
+                image_index  = 0;
+            }
+            image_speed  = 1;
+            x += sign(_diff) * min(abs(_diff), 3); // max 3px/frame
+            image_xscale = (sign(_diff) > 0) ? -1 : 1; // fata spre directia de mers
         }
         else
         {
@@ -31,6 +34,9 @@ function PlayerState_FinishingMove()
             image_speed  = 0.2;
             fm_prev_frame = 0;
             image_xscale = (fm_dir > 0) ? 1 : -1;
+            // Ridica playerul ca picioarele sa fie la sol (origin pe stake, nu pe picioare)
+            // Picioare sPlayerStakeP1 la sprite y=57, origin la y=39 → offset (57-39)*1.25 = 22.5
+            y -= (57 - 39) * image_yscale;
         }
     }
 
@@ -54,7 +60,7 @@ function PlayerState_FinishingMove()
         var _fp = floor(fm_prev_frame);
 
         var _dx = [ 0,  5, 15, 30, 38, 35, 27,  0,  -5, -2];
-        var _dy = [ 0,  0, -2, -5, -7, -5, -2,  0,   0,  0]; // arc parabolic
+        var _dy = [ 0,  0, -8, -18, -20, -15, -10,  0,   0,  0]; // arc parabolic ridicat
 
         if (_fi != _fp && _fi >= 0 && _fi < 10)
         {
@@ -74,10 +80,9 @@ function PlayerState_FinishingMove()
                         hsp          = 0;
                     }
 
-                    // 2. Snap player la nivelul pieptului boss-ului
-                    // boss.y = tălpi (bottom-center), chest = boss.y - (77-30)*2.5
-                    x = fm_boss.x;
-                    y = fm_boss.y - 117; // pieptul Strigoiului față de tălpi
+                    // 2. Snap player: aliniaza originea playerului cu tarusul din strigoi (47,29)
+                    x = fm_boss.x + (47 - 44) * fm_dir * 2.5; // = boss.x + 7.5 * fm_dir
+                    y = fm_boss.y + (29 - 71) * 2.5;          // = boss.y - 105
                 }
             }
             else
@@ -87,16 +92,15 @@ function PlayerState_FinishingMove()
             }
         }
 
-        // Freeze pe frame 9/10 — după ce animația s-a terminat
-        if (animation_end())
+        // Freeze la frame 10 (0-indexed)
+        if (floor(image_index) >= 10)
         {
             fm_phase      = 3;
             image_speed   = 0;
+            image_index   = 10;
             fm_prev_frame = 150;
-            // Coboară player la originea boss-ului + offset vizual
-            // Origin player (stake y=48 × 1.25) = origin boss (piept y=30 × 2.2)
             if (instance_exists(fm_boss))
-                y = fm_boss.y - 117;
+                y = fm_boss.y - 89;
         }
     }
 
@@ -112,15 +116,20 @@ function PlayerState_FinishingMove()
                 fm_boss.image_speed = 0.1;
 
             // Faza de zbor — player sare departe de strigoi
-            fm_phase = 4;
-            hsp      = -fm_dir * 2;
-            vsp      = -2;
+            fm_phase    = 4;
+            hsp         = -fm_dir * 2;
+            vsp         = -2;
+            image_speed = 0.3; // continua ultimele frame-uri in timp ce cade
         }
     }
 
     // ── FAZA 4 — zbor departe de strigoi ─────────────────────
     else if (fm_phase == 4)
     {
+        // Opreste animatia dupa ultimul frame
+        if (image_speed > 0 && animation_end())
+            image_speed = 0;
+
         vsp += grv;
         x   += hsp;
         y   += vsp;

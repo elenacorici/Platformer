@@ -1,7 +1,7 @@
 function PlayerState_Attack_Combo(){
 	hsp = 0;
-	mask_index = -1;
-	
+	mask_index = sPlayer;
+
 	vsp = vsp + grv;
 	
 	if (place_meeting(x, y + vsp, oWall))
@@ -12,6 +12,7 @@ function PlayerState_Attack_Combo(){
 	}
 	else
 		y += vsp;
+	y = floor(y); // previne acumularea de y fractionar
 	
 	if (sprite_index != sPlayerA2)
 	{
@@ -66,7 +67,7 @@ function PlayerState_Attack_Combo(){
 	
 	if (animation_end())
 	{
-		mask_index = -1;
+		mask_index = sPlayer;
 		combo_count = 0;
 		state = PLAYERSTATE.FREE;
 	}

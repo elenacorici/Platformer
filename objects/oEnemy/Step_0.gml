@@ -1,5 +1,18 @@
 vsp += grv;
 
+// ── Comportament legat de un oBranch (setat din Creation Code cu linked_branch) ──
+if (variable_instance_exists(id, "linked_branch") && instance_exists(linked_branch))
+{
+    var _branch_idle = (linked_branch.state == "idle");
+    patrol_dist = _branch_idle ? linked_branch_dist : 0;
+
+    // La momentul ridicarii branch-ului, porneste spre stanga (spre player)
+    if (!_branch_idle && linked_branch_was_idle)
+        patrol_dir = -1;
+
+    linked_branch_was_idle = _branch_idle;
+}
+
 // ── Context player ────────────────────────────────────────────────────────────
 var _same_level_max = (wall_tile_height * 0.5) + same_level_slack;
 var _can_see_player = false;
@@ -13,7 +26,10 @@ if (instance_exists(oPlayer))
     _chase_dir = sign(oPlayer.x - x);
     if (_chase_dir == 0) _chase_dir = 1;
     _floor_toward_player = place_meeting(x + _chase_dir * check_distance, y + 1, oWall);
-    _can_see_player = (_dist < sight_range && abs(y - oPlayer.y) < _same_level_max && grounded);
+    var _check_y = y;
+    if (Enemy_IsWolfEnemy() && mask_index != -1)
+        _check_y += (sprite_get_bbox_bottom(mask_index) - sprite_get_yoffset(mask_index)) * size;
+    _can_see_player = (_dist < sight_range && abs(_check_y - oPlayer.y) < _same_level_max && grounded);
 }
 
 var ctx = {
@@ -23,6 +39,44 @@ var ctx = {
     dist: _dist,
     floor_toward_player: _floor_toward_player
 };
+
+// ── Wolf: sleep mechanic ──────────────────────────────────────────────────────
+if (Enemy_IsWolfEnemy())
+{
+    if (_can_see_player || state != ENEMYSTATE.PATROL)
+        player_absent_timer = 0;
+    else
+        player_absent_timer++;
+
+    // Trezire cand playerul intra in raza
+    if (sleep_phase > 0 && _can_see_player)
+    {
+        sleep_phase = 0;
+        player_absent_timer = 0;
+    }
+
+    // Intrare in sleep dupa absenta lunga a playerului
+    if (sleep_phase == 0 && state == ENEMYSTATE.PATROL
+    &&  idle_break_phase == 0 && player_absent_timer >= 400)
+    {
+        sleep_phase = 1;
+        image_index = 0;
+    }
+
+    // Trezire periodica: dupa ~10 secunde de somn pleaca la ture, apoi readoarme
+    if (sleep_phase == 2)
+    {
+        sleep_wander_timer++;
+        if (sleep_wander_timer >= 600)
+        {
+            sleep_phase = 0;
+            sleep_wander_timer = 0;
+            player_absent_timer = 0;
+        }
+    }
+    else
+        sleep_wander_timer = 0;
+}
 
 // ── Cooldown-uri ──────────────────────────────────────────────────────────────
 if (attack_cooldown > 0) attack_cooldown--;
@@ -53,6 +107,7 @@ if (idle_break_phase == 1)
 }
 
 if (idle_break_phase == 0 && idle_break_cooldown <= 0 && grounded
+    && attack_cooldown <= 0
     && (state == ENEMYSTATE.PATROL || state == ENEMYSTATE.CHASE)
     && _at_edge && !_idle_skip_near && random(1) < idle_break_roll_chance_ledge)
 {
@@ -72,11 +127,19 @@ if (state == ENEMYSTATE.CHASE)
 if (state == ENEMYSTATE.PATROL && ctx.can_see_player && ctx.floor_toward_player)
     state = ENEMYSTATE.CHASE;
 
+var _attack_check_y = y;
+if (Enemy_IsWolfEnemy() && mask_index != -1)
+    _attack_check_y += (sprite_get_bbox_bottom(mask_index) - sprite_get_yoffset(mask_index)) * size;
 if (state == ENEMYSTATE.CHASE && instance_exists(oPlayer) && grounded
     && attack_cooldown <= 0 && ctx.dist <= attack_range
-    && ctx.floor_toward_player && abs(y - oPlayer.y) < ctx.same_level_max)
+    && ctx.floor_toward_player && abs(_attack_check_y - oPlayer.y) < ctx.same_level_max)
 {
     if (idle_break_phase != 0) { idle_break_phase = 0; idle_break_breath_timer = 0; }
+    if (Enemy_IsWolfEnemy())
+    {
+        wolf_jump_active    = false;
+        idle_break_cooldown = idle_break_cooldown_max;
+    }
     state_after_attack = ENEMYSTATE.CHASE;
     state = ENEMYSTATE.ATTACK;
     image_index = 0;
@@ -84,11 +147,20 @@ if (state == ENEMYSTATE.CHASE && instance_exists(oPlayer) && grounded
 }
 
 // ── Execuție stare ────────────────────────────────────────────────────────────
-switch (state)
+if (Enemy_IsWolfEnemy() && sleep_phase > 0)
 {
-    case ENEMYSTATE.PATROL: EnemyState_Patrol();      break;
-    case ENEMYSTATE.CHASE:  EnemyState_Chase(ctx);    break;
-    case ENEMYSTATE.ATTACK: EnemyState_Attack();      break;
+    hsp = 0;
+    Enemy_VerticalResolve();
+    _Enemy_UpdateLocomotionAnim();
+}
+else
+{
+    switch (state)
+    {
+        case ENEMYSTATE.PATROL: EnemyState_Patrol();      break;
+        case ENEMYSTATE.CHASE:  EnemyState_Chase(ctx);    break;
+        case ENEMYSTATE.ATTACK: EnemyState_Attack();      break;
+    }
 }
 
 // ── Facing ────────────────────────────────────────────────────────────────────

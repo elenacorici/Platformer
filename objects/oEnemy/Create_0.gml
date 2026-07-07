@@ -13,7 +13,7 @@ check_distance = 25;
 sight_range = 150;
 attack_range = 56;
 wall_tile_height = sprite_get_height(sWall);
-same_level_slack = 6;
+same_level_slack = 26;
 
 attack_anim_speed = 0.4;
 attack_cooldown = 0;
@@ -22,6 +22,9 @@ attack_cooldown_frames = 40;
 hitPlayerThisAttack = ds_list_create();
 
 idle_break_phase = 0;
+player_absent_timer = 0;
+sleep_phase = 0;        // 0=treaz, 1=asezare, 2=dormit
+sleep_wander_timer = 0; // cat timp a dormit in faza 2
 idle_break_breath_timer = 0;
 idle_break_will_scratch = false;
 idle_break_cooldown = 0;

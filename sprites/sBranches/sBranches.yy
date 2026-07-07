@@ -2,7 +2,7 @@
   "$GMSprite":"v2",
   "%Name":"sBranches",
   "bboxMode":0,
-  "bbox_bottom":319,
+  "bbox_bottom":270,
   "bbox_left":0,
   "bbox_right":319,
   "bbox_top":0,

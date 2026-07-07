@@ -1,3 +1,5 @@
+if (other.state == PLAYERSTATE.CLIMBING || other.climb_lock > 0) exit;
+
 if (other.state == PLAYERSTATE.ATTACK_SLASH || other.state == PLAYERSTATE.ATTACK_COMBO)
 {
     // Înregistrează lovitură o singură dată per atac
@@ -26,4 +28,9 @@ else if (state == "idle")
         x -= hsp;
         hsp = 0;
     }
+}
+else if ((state == "up" || state == "settle") && other.vsp > 1.5 && other.state != PLAYERSTATE.CLIMBING)
+{
+    // Player aterizeaza pe creanga ridicata — balanganeala subtila
+    shake_timer = max(shake_timer, 22);
 }
