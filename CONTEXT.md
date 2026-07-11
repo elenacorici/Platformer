@@ -81,12 +81,12 @@ Platformer 2D în **GameMaker Studio 2 (GML)**, tema folclor românesc.
 
 ### oBoss1
 
-- **HP:** `hp = 2, max_hp = 2` ← (valoare de test, nu 100!)
+- **HP:** `hp = 40, max_hp = 40` (2026-07-09 — setat de la valoarea de test 2; 4 hit-uri de slash la 10 dmg, comparabil cu oBoss2 hp=30)
 - `boss_scale = 2.5, facing = 1, grv = 0.1`
 - **Mask:** `mask_index = sBoss1` (separat de sprite vizual)
 - **Cooldown-uri:** `attack_cooldown = 120, hop_cooldown, ivy_cooldown, slam_cooldown`
 - **State machine (string):** idle, patrol, patrol_idle, attack_hop_windup, attack_hop_air, attack_hop_land, attack_hop_recover, attack_ivy, attack_ivy_wait, attack_ivy_hop, attack_ivy_end, attack_slam, attack_slam_recover, dizzy, dying, grave
-- **Death:** hp==1 → dizzy (blochează atacuri) → hp<=0 → dying (sBoss1D) → grave (frozen) → destroy
+- **Death:** hp<=max_hp*0.5 → dizzy (blochează atacuri, `phase=2`) → hp<=0 → dying (sBoss1D) → grave (frozen) → destroy (fixat 2026-07-09: era `hp==1`, un check exact care functiona doar din întâmplare cât timp max_hp era 2 de test)
 - **Guard:** `if (instance_exists(oBossTree) && oBossTree.state != "done") exit`
 - **Test keys (de șters):** U=patrol, Y=hop, T=ivy
 - **HP bar:** desenat în Draw_0 (verde pe roșu)
@@ -95,10 +95,10 @@ Platformer 2D în **GameMaker Studio 2 (GML)**, tema folclor românesc.
 ### oBossTree
 
 - `image_xscale/yscale = 2.6`
-- `proximity_needed = 180` frames lângă copac înainte de trigger
-- `proximity_timer` crește cu player aproape (<250px), scade cu 2 când pleacă
-- **State machine:** idle → wake (sBossTreeWake, 0.04 speed) → burst (sBossTreeBurst, 0.1 speed) → spawn oBoss1 + self-destroy
-- Camera se blochează pe copac în wake/burst, player pierde controlul
+- Nu mai are auto-trigger prin proximitate — pornirea intro-ului e declanșată extern de `oBossCamTrigger` (setează `state="wake"` + sprite), la fel ca declanșarea `oGrave` din BossRoom2
+- **State machine:** idle (așteaptă trigger extern) → wake (sBossTreeWake, 0.08 speed) → la final: ScreenShake(5,90) + ploaie de frunze (particule sprite `sLeaf` pe layer-ul "Particles", depth 50 — desenate în fața lui oBoss1 de pe "Enemies" depth 100) + spawn oBoss1 + self-destroy imediat (particulele continuă să existe independent și se sting singure)
+- **sBossTreeBurst NU mai e folosit** (2026-07-09) — animația de "spargere" a copacului a fost eliminată, înlocuită de ploaia de frunze; sprite-ul a rămas ca resursă neutilizată
+- Camera se blochează prin `oCamera.cam_locked` (setat de trigger), nu mai prin `follow=noone`; player e stunned 180 frame de trigger (nu mai `hascontrol=false`)
 
 ### oCamera
 
@@ -342,7 +342,7 @@ Platformer 2D în **GameMaker Studio 2 (GML)**, tema folclor românesc.
 | ------------------------------------------- | --------------------------------------- |
 | `objects/oPlayer/Create_0.gml`              | Toate variabilele player                |
 | `objects/oPlayer/Step_0.gml`                | Input + state machine dispatch          |
-| `objects/oBoss1/Create_0.gml`               | Variabile boss (hp=2 test!)             |
+| `objects/oBoss1/Create_0.gml`               | Variabile boss (hp=40)                  |
 | `objects/oBoss1/Step_0.gml`                 | Guard oBossTree + phase scripts + death |
 | `objects/oBoss1/Step_1.gml`                 | Dizzy/dying transitions                 |
 | `objects/oBossTree/Create_0.gml`            | Setup copac intro                       |

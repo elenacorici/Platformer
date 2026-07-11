@@ -3,6 +3,10 @@ spr_idle   = sIele3Idle;
 spr_walk   = sIele3Walk;
 spr_skip   = sIele3Skip;
 spr_static = sIele3;
+// Masca de coliziune FIXA — fara asta, GM foloseste bbox-ul sprite-ului curent,
+// care difera intre skip/walk/static, cauzand blocaje intermitente in perete
+// exact la tranzitia patrol(skip)->walk
+mask_index = spr_skip;
 spr_dash = sIele3Dash;
 spr_jump = sIele3Jump;
 spr_push = sIele3Push;
@@ -95,3 +99,7 @@ flash            = 0;
 hitfrom          = 0;
 is_dead          = false;
 rage_active      = false;
+
+// ── Moarte (1 parte: explozie de lumina) ────────────────────────
+spr_die      = sIel33Die;
+death_phase  = 0; // 0=normal, 1=explozie, 2=terminat

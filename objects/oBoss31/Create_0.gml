@@ -3,6 +3,10 @@ spr_idle   = sIele1Idle;
 spr_walk   = sIele1Walk;
 spr_skip   = sIele1Skip;
 spr_static = sIele1;
+// Masca de coliziune FIXA — fara asta, GM foloseste bbox-ul sprite-ului curent,
+// care difera intre skip/walk/static (ex: sIele1Skip bbox_left=3 vs sIele1Walk bbox_left=9),
+// cauzand blocaje intermitente in perete exact la tranzitia patrol(skip)->walk
+mask_index = spr_skip;
 spr_dash = sIele1Dash;
 spr_jump = sIele1Jump;
 spr_push = sIele1Push;
@@ -96,3 +100,10 @@ flash            = 0;
 hitfrom          = 0;
 is_dead          = false;
 rage_active      = false;
+
+// ── Plecaciune + fuga definitiva (win condition, cand celelalte 2 au murit) ──
+spr_bow      = sIele1DieA; // Part 1 — plecaciunea (one-shot)
+spr_flee     = sIele1DieB; // Part 2 — sprint spre dreapta (loop)
+escape_phase = 0;          // 0=normal, 1=plecaciune, 2=fuga
+escape_holding    = false; // true cat sta inghetata pe ultimul cadru al plecaciunii
+escape_hold_timer = 0;

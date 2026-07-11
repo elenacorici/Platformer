@@ -1,5 +1,5 @@
-// Tranziție DIZZY la ultimul HP
-if (hp == 1 && state != "dizzy" && state != "dying" && state != "grave")
+// Tranziție DIZZY la HP <= 50% (era "hp == 1", valabil doar cat timp max_hp era 2 de test)
+if (hp <= max_hp * 0.5 && state != "dizzy" && state != "dying" && state != "grave")
 {
     state = "dizzy";
     sprite_index = sBossDizz;
@@ -7,6 +7,7 @@ if (hp == 1 && state != "dizzy" && state != "dying" && state != "grave")
     image_speed = 0.1;
     hsp = 0;
     attack_cooldown = 99999;
+    phase = 2;
 }
 
 // Tranziție DYING la HP 0

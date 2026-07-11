@@ -138,4 +138,10 @@ function _spawn_arrow(_angle_offset) {
 	_a.arrow_dmg     = _dmg;
 	_a.image_angle   = _dir + 180;
 	_a.arrow_gravity = _grav;
+	// Doar sageata centrala (cu calcul balistic) urmareste usor tinta blocata —
+	// altfel, daca Ielea se misca dupa ce sageata a plecat, ajunge la pozitia
+	// veche (goala) sau, daca Ielele sunt apropiate, poate lovi o alta Ielă
+	// decat cea blocata (damage-ul apare, dar bow_target ramane pe cea reala,
+	// nelovita — parea ca "targetul nu se scoate").
+	_a.homing_target = (_angle_offset == 0) ? bow_target : noone;
 }

@@ -23,11 +23,32 @@ if (!fight_started)
 }
 
 // ── Detectie moarte Iele ──────────────────────────────────────
+// Iela1 (idx=0) nu moare NICIODATA din damage — clampata la hp>=1, ca sa
+// participe normal la lupta (phase transitions, hora, pp, stomp) fara sa
+// ajunga vreodata in starea is_dead. Vezi blocul de mai jos pentru ce se
+// intampla cu ea de fapt (win condition).
 for (var _di = 0; _di < 3; _di++)
 {
     if (!instance_exists(iele[_di])) continue;
+    if (_di == 0)
+    {
+        if (iele[_di].hp < 1) iele[_di].hp = 1;
+        continue;
+    }
     if (iele[_di].hp <= 0 && !iele[_di].is_dead)
         _iele_death(_di);
+}
+
+// ── Win condition: cand Iela2 SI Iela3 au murit (indiferent de ordine),
+// Iela1 e ultima ramasa — face plecaciune + fuge definitiv (gestionat autonom
+// in oBoss31/Step_0.gml). Controller-ul nu mai porneste nimic nou aici — cu un
+// singur corp ramas, n-are sens o hora/pp/stomp coordonat.
+if (iele2_dead && iele3_dead)
+{
+    stomp_active = false;
+    hora_active  = false;
+    pp_active    = false;
+    exit;
 }
 
 // ── Tranzitii de phase ────────────────────────────────────────
@@ -226,14 +247,6 @@ if (boss_phase == 3 && instance_exists(oPlayer)
 else if (boss_phase < 3)
     bow_distance_timer = 0;
 
-// ── TEST KEYS ─────────────────────────────────────────────────
-if (keyboard_check_pressed(ord("P"))) _start_pingpong();
-if (keyboard_check_pressed(ord("O"))) _start_hora();
-if (keyboard_check_pressed(ord("I"))) _send_to_perch();
-if (keyboard_check_pressed(ord("J"))) _dismount_from_perch();
-if (keyboard_check_pressed(ord("K"))) _start_throw();
-if (keyboard_check_pressed(ord("U"))) _start_stomp();
-
 // ── GESTIONEAZA HORA ─────────────────────────────────────────
 _manage_hora();
 
@@ -243,10 +256,17 @@ if (stomp_active)
     // ── 1. Detecteaza cand toate 3 sunt in stomp_idle → porneste sync timer ──
     if (!stomp_sync_started)
     {
+        // Exclude Ielele moarte — altfel conditia nu devine niciodata
+        // adevarata daca oricare dintre ele a murit deja (_start_stomp le
+        // sare, deci iele_attack ramane "none" la infinit pentru ele),
+        // blocand tot atacul de stomp/ploaia de bolovani permanent.
         var _all_idle = true;
         for (var _si = 0; _si < 3; _si++)
-            if (!instance_exists(iele[_si]) || iele[_si].iele_attack != "stomp_idle")
+        {
+            if (!instance_exists(iele[_si]) || iele[_si].is_dead) continue;
+            if (iele[_si].iele_attack != "stomp_idle")
                 { _all_idle = false; break; }
+        }
 
         if (_all_idle)
         {
@@ -310,10 +330,14 @@ if (stomp_active)
     // ── 3. Detecteaza cand toate 3 sunt in loop → porneste ploaia ───────────
     if (!stomp_rain_active && stomp_sync_started)
     {
+        // Acelasi fix ca mai sus — exclude Ielele moarte din verificare.
         var _all_looping = true;
         for (var _si = 0; _si < 3; _si++)
-            if (!instance_exists(iele[_si]) || !iele[_si].stomp_looping)
+        {
+            if (!instance_exists(iele[_si]) || iele[_si].is_dead) continue;
+            if (!iele[_si].stomp_looping)
                 { _all_looping = false; break; }
+        }
 
         if (_all_looping)
         {
@@ -341,7 +365,15 @@ if (stomp_active)
 
             var _px    = instance_exists(oPlayer) ? oPlayer.x : (arena_x1 + arena_x2) * 0.5;
             var _cam_y = camera_get_view_y(view_camera[0]);
-            var _count = irandom_range(2, 3);
+
+            // Mai putini bolovani daca lupta continua cu mai putin de 3 Iele
+            // vii — proportional cu numarul ramas (stomp-ul ramane posibil
+            // dupa moartea uneia, vezi fix-urile _all_idle/_all_looping de
+            // mai sus, dar cu un impact vizual mai mic).
+            var _alive_n = 0;
+            for (var _ai = 0; _ai < 3; _ai++)
+                if (instance_exists(iele[_ai]) && !iele[_ai].is_dead) _alive_n++;
+            var _count = (_alive_n >= 3) ? irandom_range(2, 3) : irandom_range(1, 2);
 
             repeat (_count)
             {
@@ -476,7 +508,7 @@ function _start_pingpong()
 
     for (var _i = 0; _i < 3; _i++)
     {
-        if (!instance_exists(iele[_i])) continue;
+        if (!instance_exists(iele[_i]) || iele[_i].is_dead) continue;
         if (_i == pp_left_idx)       iele[_i].iele_attack = "pp_left";
         else if (_i == pp_right_idx) iele[_i].iele_attack = "pp_right";
         else                         iele[_i].iele_attack = "pp_watch";
@@ -504,7 +536,7 @@ function _start_stomp()
     for (var _i = 0; _i < 3; _i++)
     {
         var _idx = _sorted[_i];
-        if (!instance_exists(iele[_idx])) continue;
+        if (!instance_exists(iele[_idx]) || iele[_idx].is_dead) continue;
         scenario_target_x[_idx]       = _cx + _offsets[_i];
         iele[_idx].stomp_started      = false;
         iele[_idx].stomp_looping      = false;
@@ -565,15 +597,23 @@ function _send_to_perch()
     perch_count++;
 }
 
-function _start_hora()
+function _start_hora(_center_x_override = undefined)
 {
+    // Hora e o formatie de 3 — daca oricare Iela (2 sau 3; Iela1 nu moare
+    // niciodata) a murit deja, atacul nu mai are sens si nu mai trebuie sa
+    // porneasca deloc, in niciuna din cele 3 ramuri care o pot declansa
+    // (trigger-ul "player sta pe loc" + toate cele 3 cazuri din _try_attack).
+    if (iele2_dead || iele3_dead) return;
     if (hora_active || pp_active) return;
     hora_active  = true;
     hora_phase   = 0;
     hora_timer   = 0;
 
-    // Centrul formatiei: langa player, clamped in arena
-    hora_center_x = clamp(bb_player_x, arena_x1 + 144, arena_x2 - 144);
+    // Centrul formatiei: langa player (implicit), sau punctul dat explicit
+    // (folosit la intro, ca hora sa se formeze exact unde s-au adunat Ielele, nu la player)
+    hora_center_x = is_undefined(_center_x_override)
+        ? clamp(bb_player_x, arena_x1 + 144, arena_x2 - 144)
+        : _center_x_override;
 
     // Sorteaza Ielele dupa pozitia curenta (stanga → dreapta)
     var _sorted = [0, 1, 2];
@@ -590,7 +630,7 @@ function _start_hora()
     for (var _i = 0; _i < 3; _i++)
     {
         var _idx = _sorted[_i];
-        if (!instance_exists(iele[_idx])) continue;
+        if (!instance_exists(iele[_idx]) || iele[_idx].is_dead) continue;
         scenario_target_x[_idx] = hora_center_x + _offsets[_i];
         iele[_idx].iele_attack   = "hora";
     }
@@ -606,20 +646,45 @@ function _end_hora()
 
     for (var _i = 0; _i < 3; _i++)
     {
-        if (!instance_exists(iele[_i])) continue;
+        if (!instance_exists(iele[_i]) || iele[_i].is_dead) continue;
         iele[_i].visible     = true;
         iele[_i].iele_attack = "none";
         iele[_i].hsp         = 0;
     }
 
-    // Phase 1: moment dramatic — toate 3 se desfac, push urmeaza cu controale inversate
-    if (boss_phase == 1 && phase1_setup_done
+    // Phase 1: moment dramatic — toate 3 se desfac, push urmeaza cu controale inversate.
+    // FIXAT — HP bar-ul aparea abia la a 3-a hora, nu la a 2-a (prima horă de
+    // atac, imediat dupa E): conditia veche `phase1_setup_done` era legata de
+    // un timer COMPLET separat (5 sec pana Iela3 urca pe creanga), care
+    // porneste din acelasi moment (fight_started) ca si hora #2 — dar hora #2
+    // dureaza de obicei mai mult de 5 sec (pull + 3 sec stun), deci
+    // `phase1_setup_done` aproape niciodata nu era gata la timp, amanand
+    // dispersia dramatica + combat_visible pentru urmatoarea hora (#3).
+    // `hora_dispersal_done` (nou, resetat doar la Create) marcheaza direct
+    // "prima hora reala care s-a terminat" — hora #1 (intro) nu apeleaza
+    // niciodata _end_hora() (oHora iese instant din Step daca !fight_started),
+    // deci prima invocare reala e garantat hora #2.
+    if (boss_phase == 1 && !hora_dispersal_done
     &&  instance_exists(iele[2]) && !iele[2].is_dead)
     {
+        hora_dispersal_done = true;
+
+        // FIXAT — Iela3 zbura spre (0,0) (coltul stanga-sus, complet in afara
+        // cadrului): perch_x/perch_y erau calculate DOAR in blocul vechi
+        // "Phase 1: trimite Iela3 pe creanga dupa 5 sec" (mai jos), niciodata
+        // aici. Inainte mergea din intamplare, fiindca dispersia astepta
+        // `phase1_setup_done` (setat chiar in acel bloc, deci garanta implicit
+        // ca perch_x/perch_y erau deja calculate). Acum ca dispersia porneste
+        // mai devreme (hora_dispersal_done, vezi fix-ul de mai sus pt HP bar),
+        // acea garantie s-a rupt — trebuie calculate explicit aici.
+        perch_x = (arena_x1 + arena_x2) * 0.5;
+        perch_y = instance_exists(iele[0]) ? (iele[0].y - 340) : (bb_player_y - 340);
+
         iele[2].iele_attack = "perch";
         perch_count = 1;
 
         if (instance_exists(oCamera)) ScreenShake(10, 22);
+        combat_visible = true; // aici se termina "atacul" de start — abia acum apare Health bar-ul
 
         // Iela1 si Iela2 dashaza rapid la marginile arenei
         _set_scenario("liniste");
@@ -701,33 +766,42 @@ function _set_scenario(_name)
             break;
 
         case "schimb":
-            // Stanga face skip, dreapta face dash — se incruciseaza
+            // Stanga face skip, dreapta face dash — se incruciseaza. Distanta
+            // de crossover (implicit 260) se comprima simetric daca playerul
+            // e prea aproape de un zid, ca ambele tinte sa incapa mereu in
+            // arena (fara sa clampeze fiecare separat, care ar rupe simetria
+            // si ar putea lipi o Iela de zid langa player).
             scenario_timer = 280;
+            var _edge_margin_s = 40;
+            var _dist_r = arena_x2 - _edge_margin_s - bb_player_x; // spatiu spre dreapta
+            var _dist_l = bb_player_x - arena_x1 - _edge_margin_s; // spatiu spre stanga
+            var _cross_dist = clamp(min(260, _dist_r, _dist_l), 0, 260);
+
             var _li = _leftmost_iele();
             var _ri = _rightmost_iele();
             if (_li >= 0)
             {
                 scenario_role[_li]     = "skip_to";
-                scenario_target_x[_li] = clamp(bb_player_x + 260, arena_x1 + 40, arena_x2 - 40);
+                scenario_target_x[_li] = bb_player_x + _cross_dist;
             }
             if (_ri >= 0)
             {
                 scenario_role[_ri]     = "dash_to";
-                scenario_target_x[_ri] = clamp(bb_player_x - 260, arena_x1 + 40, arena_x2 - 40);
+                scenario_target_x[_ri] = bb_player_x - _cross_dist;
             }
             break;
 
         case "dus_intors":
-            // Una face dash departe, pauza, dash inapoi
+            // Una face dash departe, pauza, dash inapoi. Distanta (320) se
+            // comprima daca ar trece de zid — vezi Iele_EdgeSafeDist.
             scenario_timer = 400;
             scenario_phase = 0; // 0=dus, 1=pauza, 2=intors
             var _ai = _any_iele_with_dash();
             if (_ai >= 0)
             {
                 scenario_role[_ai]     = "dash_to";
-                var _far = (iele[_ai].x < bb_player_x)
-                         ? clamp(bb_player_x + 320, arena_x1 + 40, arena_x2 - 40)
-                         : clamp(bb_player_x - 320, arena_x1 + 40, arena_x2 - 40);
+                var _dir_ai = (iele[_ai].x < bb_player_x) ? 1 : -1;
+                var _far    = bb_player_x + _dir_ai * Iele_EdgeSafeDist(bb_player_x, _dir_ai, 320, arena_x1, arena_x2);
                 scenario_target_x[_ai] = _far;
                 // Salveaza indexul si pozitia originala pentru faza de intors
                 scenario_target_x[(_ai + 1) mod 3] = iele[_ai].x; // reuse slot pentru origin
@@ -735,96 +809,84 @@ function _set_scenario(_name)
             break;
 
         case "una_zboara":
-            // Una face jump inalt, celelalte idle
+            // Una face jump inalt, celelalte idle. Distanta (200) se comprima
+            // daca ar trece de zid — vezi Iele_EdgeSafeDist.
             scenario_timer = 260;
             var _ji = irandom(2);
             while (!instance_exists(iele[_ji])) _ji = (_ji + 1) mod 3;
-            scenario_role[_ji]     = "jump";
-            scenario_target_x[_ji] = clamp(
-                bb_player_x + ((iele[_ji].x < bb_player_x) ? 200 : -200),
-                arena_x1 + 40, arena_x2 - 40);
+            scenario_role[_ji] = "jump";
+            var _dir_ji = (iele[_ji].x < bb_player_x) ? 1 : -1;
+            scenario_target_x[_ji] = bb_player_x + _dir_ji * Iele_EdgeSafeDist(bb_player_x, _dir_ji, 200, arena_x1, arena_x2);
             break;
 
         case "apropierea":
-            // Toate 3 walk spre player, stop la ~200px
+            // Toate 3 walk spre player, stop la ~200px. Daca partea "naturala"
+            // (cea pe care e deja Ielea) ar pune-o prea aproape de zidul arenei
+            // (posibil chiar intre player si zid, daca playerul e si el aproape
+            // de margine), trece pe partea opusa playerului — unde e loc.
             scenario_timer = 360;
+            var _edge_margin = 40; // aceeasi marja ca la clamp-ul de mai jos
             for (var _i = 0; _i < 3; _i++)
             {
                 if (!instance_exists(iele[_i])) continue;
                 var _side = (iele[_i].x < bb_player_x) ? -1 : 1;
+                var _raw  = bb_player_x + _side * 200;
+                if (_raw < arena_x1 + _edge_margin || _raw > arena_x2 - _edge_margin)
+                {
+                    _side = -_side;
+                    _raw  = bb_player_x + _side * 200;
+                }
                 scenario_role[_i]     = "walk_to";
-                scenario_target_x[_i] = clamp(bb_player_x + _side * 200,
-                                               arena_x1 + 40, arena_x2 - 40);
+                scenario_target_x[_i] = clamp(_raw, arena_x1 + _edge_margin, arena_x2 - _edge_margin);
             }
             break;
 
         case "rand_pe_rand":
-            // Secvential: A dash → pauza → B skip → pauza → C jump
+            // Secvential: A dash → pauza → B skip → pauza → C jump. Distantele
+            // se comprima daca ar trece de zid — vezi Iele_EdgeSafeDist.
             scenario_timer = 480;
             scenario_phase = 0;
             scenario_phase_t = 0;
             // Faza 0: prima Iela face dash
             if (instance_exists(iele[0]))
             {
-                scenario_role[0]     = "dash_to";
-                scenario_target_x[0] = clamp(
-                    bb_player_x + ((iele[0].x < bb_player_x) ? 220 : -220),
-                    arena_x1 + 40, arena_x2 - 40);
+                scenario_role[0]  = "dash_to";
+                var _dir0 = (iele[0].x < bb_player_x) ? 1 : -1;
+                scenario_target_x[0] = bb_player_x + _dir0 * Iele_EdgeSafeDist(bb_player_x, _dir0, 220, arena_x1, arena_x2);
             }
-            break;
-
-        case "pingpong":
-            // 2 Iele se flancheaza, paseaza player ul intre ele
-            scenario_timer = 600;
-            pp_phase       = 0;
-            pp_timer       = 0;
-            pp_passes      = 0;
-
-            // Alege left si right bazat pe pozitie
-            pp_left_idx  = _leftmost_iele();
-            pp_right_idx = _rightmost_iele();
-            var _pp_w = -1;
-            for (var _ppi = 0; _ppi < 3; _ppi++)
-            {
-                if (_ppi != pp_left_idx && _ppi != pp_right_idx && instance_exists(iele[_ppi]))
-                    _pp_w = _ppi;
-            }
-
-            if (pp_left_idx >= 0)
-            {
-                scenario_role[pp_left_idx]     = "pp_left";
-                scenario_target_x[pp_left_idx] = clamp(bb_player_x - 180, arena_x1+40, arena_x2-40);
-            }
-            if (pp_right_idx >= 0)
-            {
-                scenario_role[pp_right_idx]     = "pp_right";
-                scenario_target_x[pp_right_idx] = clamp(bb_player_x + 260, arena_x1+40, arena_x2-40);
-            }
-            if (_pp_w >= 0) scenario_role[_pp_w] = "idle";
             break;
 
         case "urmarire":
-            // Player e departe — una dash rapid, celelalte 2 vin mai incet
+            // Player e departe — una dash rapid, celelalte 2 vin mai incet.
+            // Formatia (-160/0/+160) e simetrica, nu poate fi comprimata
+            // dintr-o singura parte (ca la dus_intors/una_zboara) fara sa-i
+            // strice forma — daca vreo extrema ar trece de zid, scalez TOATE
+            // 3 offset-urile proportional, ca sa ramana simetrice, doar mai
+            // stranse.
             scenario_timer = 240;
-            var _dash_i  = _any_iele_with_dash();
-            var _side_px = bb_player_x;
+            var _dash_i    = _any_iele_with_dash();
+            var _side_px   = bb_player_x;
+            var _edge_margin_u = 40;
+            var _room_r    = arena_x2 - _edge_margin_u - _side_px;
+            var _room_l    = _side_px - arena_x1 - _edge_margin_u;
+            var _fscale    = clamp(min(1, _room_r / 160, _room_l / 160), 0, 1);
 
             for (var _i = 0; _i < 3; _i++)
             {
                 if (!instance_exists(iele[_i])) continue;
-                var _offset = (_i == 0) ? -160 : (_i == 1 ? 0 : 160);
+                var _offset = ((_i == 0) ? -160 : (_i == 1 ? 0 : 160)) * _fscale;
 
                 if (_i == _dash_i)
                 {
                     // Ielă cu dash ajunge prima
                     scenario_role[_i]     = "dash_to";
-                    scenario_target_x[_i] = clamp(_side_px + _offset, arena_x1 + 40, arena_x2 - 40);
+                    scenario_target_x[_i] = _side_px + _offset;
                 }
                 else
                 {
                     // Celelalte vin cu skip
                     scenario_role[_i]     = "skip_to";
-                    scenario_target_x[_i] = clamp(_side_px + _offset, arena_x1 + 40, arena_x2 - 40);
+                    scenario_target_x[_i] = _side_px + _offset;
                 }
             }
             break;
@@ -851,54 +913,6 @@ function _manage_scenario()
 
     switch (current_scenario)
     {
-        case "pingpong":
-            pp_timer++;
-            var _pl = (pp_left_idx  >= 0 && instance_exists(iele[pp_left_idx]))  ? iele[pp_left_idx]  : noone;
-            var _pr = (pp_right_idx >= 0 && instance_exists(iele[pp_right_idx])) ? iele[pp_right_idx] : noone;
-
-            switch (pp_phase)
-            {
-                case 0:
-                    // Tintele sunt fixate la start — verifica doar daca au ajuns
-                    var _lok = (_pl != noone) && abs(_pl.x - scenario_target_x[pp_left_idx])  < 55;
-                    var _rok = (_pr != noone) && abs(_pr.x - scenario_target_x[pp_right_idx]) < 55;
-
-                    if ((_lok && _rok) || pp_timer > 300)
-                    {
-                        pp_phase = 1; pp_timer = 0;
-                        if (_pl != noone) _pl.pp_push_now = true;
-                    }
-                    break;
-
-                case 1:
-                    // Right trebuie sa fie in pozitie inainte sa prinda playerul
-                    if (pp_right_idx >= 0) scenario_target_x[pp_right_idx] = clamp(bb_player_x + 260, arena_x1+40, arena_x2-40);
-                    var _rok1 = (_pr != noone) && abs(_pr.x - scenario_target_x[pp_right_idx]) < 60;
-
-                    // Asteapta playerul sa ajunga la right SAU timeout
-                    if (_pr != noone && _rok1 && (abs(bb_player_x - _pr.x) < 130 || pp_timer > 180))
-                    {
-                        pp_phase = 2; pp_timer = 0;
-                        _pr.pp_push_now = true;
-                    }
-                    else if (pp_timer > 200) { pp_phase = 2; pp_timer = 0; if (_pr != noone) _pr.pp_push_now = true; }
-                    break;
-
-                case 2:
-                    pp_passes++;
-                    if (pp_passes >= 2)
-                        _set_scenario("liniste");
-                    else
-                    {
-                        // Left trebuie sa fie inapoi in pozitie
-                        if (pp_left_idx >= 0) scenario_target_x[pp_left_idx] = clamp(bb_player_x - 180, arena_x1+40, arena_x2-40);
-                        pp_phase = 1; pp_timer = 0;
-                        if (_pl != noone) _pl.pp_push_now = true;
-                    }
-                    break;
-            }
-            break;
-
         case "dus_intors":
             // Faza 0=dus, dupa 120 frames→pauza, dupa 60→intors
             if (scenario_phase == 0 && scenario_phase_t >= 120)
@@ -936,10 +950,9 @@ function _manage_scenario()
                 scenario_phase_t = 0;
                 if (instance_exists(iele[1]))
                 {
-                    scenario_role[1]     = "skip_to";
-                    scenario_target_x[1] = clamp(
-                        bb_player_x + ((iele[1].x < bb_player_x) ? 200 : -200),
-                        arena_x1 + 40, arena_x2 - 40);
+                    scenario_role[1] = "skip_to";
+                    var _dir1 = (iele[1].x < bb_player_x) ? 1 : -1;
+                    scenario_target_x[1] = bb_player_x + _dir1 * Iele_EdgeSafeDist(bb_player_x, _dir1, 200, arena_x1, arena_x2);
                 }
             }
             else if (scenario_phase == 2 && scenario_phase_t >= 100)
@@ -954,10 +967,9 @@ function _manage_scenario()
                 scenario_phase_t = 0;
                 if (instance_exists(iele[2]))
                 {
-                    scenario_role[2]     = "jump";
-                    scenario_target_x[2] = clamp(
-                        bb_player_x + ((iele[2].x < bb_player_x) ? 200 : -200),
-                        arena_x1 + 40, arena_x2 - 40);
+                    scenario_role[2] = "jump";
+                    var _dir2 = (iele[2].x < bb_player_x) ? 1 : -1;
+                    scenario_target_x[2] = bb_player_x + _dir2 * Iele_EdgeSafeDist(bb_player_x, _dir2, 200, arena_x1, arena_x2);
                 }
             }
             break;
@@ -1010,20 +1022,20 @@ function _leftmost_iele()
 {
     var _best = -1; var _bx = 999999;
     for (var _i = 0; _i < 3; _i++)
-        if (instance_exists(iele[_i]) && iele[_i].x < _bx) { _bx = iele[_i].x; _best = _i; }
+        if (instance_exists(iele[_i]) && !iele[_i].is_dead && iele[_i].x < _bx) { _bx = iele[_i].x; _best = _i; }
     return _best;
 }
 function _rightmost_iele()
 {
     var _best = -1; var _bx = -999999;
     for (var _i = 0; _i < 3; _i++)
-        if (instance_exists(iele[_i]) && iele[_i].x > _bx) { _bx = iele[_i].x; _best = _i; }
+        if (instance_exists(iele[_i]) && !iele[_i].is_dead && iele[_i].x > _bx) { _bx = iele[_i].x; _best = _i; }
     return _best;
 }
 function _any_iele_with_dash()
 {
     for (var _i = 0; _i < 3; _i++)
-        if (instance_exists(iele[_i]) && iele[_i].spr_dash != -1) return _i;
+        if (instance_exists(iele[_i]) && !iele[_i].is_dead && iele[_i].spr_dash != -1) return _i;
     return 0;
 }
 function _closest_iele_to_player()
@@ -1031,7 +1043,7 @@ function _closest_iele_to_player()
     var _best = -1; var _bd = 999999;
     for (var _i = 0; _i < 3; _i++)
     {
-        if (!instance_exists(iele[_i])) continue;
+        if (!instance_exists(iele[_i]) || iele[_i].is_dead) continue;
         var _d = point_distance(iele[_i].x, iele[_i].y, bb_player_x, bb_player_y);
         if (_d < _bd) { _bd = _d; _best = _i; }
     }
@@ -1043,6 +1055,8 @@ function _closest_iele_to_player()
 // ────────────────────────────────────────────────────────────
 function _iele_death(_idx)
 {
+    // _idx==0 (Iela1) nu ajunge NICIODATA aici — vezi clamp-ul din bucla de
+    // detectie a mortii de mai sus. Ramane doar case 1/2, ambele moarte reale.
     if (!instance_exists(iele[_idx])) return;
 
     iele[_idx].is_dead     = true;
@@ -1057,28 +1071,18 @@ function _iele_death(_idx)
 
     switch (_idx)
     {
-        case 0: // Iela1 moare → Iela2 rage buff
-            iele1_dead = true;
-            if (instance_exists(iele[1]))
-            {
-                iele[1].rage_active = true;
-                // Rage: cooldown-uri reduse imediat
-                cd_hora     = min(cd_hora,     300);
-                cd_pingpong = min(cd_pingpong, 180);
-                attack_cd   = min(attack_cd,   120);
-            }
-            break;
-
-        case 1: // Iela2 moare → Iela3 fuge, fight se termina
+        case 1: // Iela2 moare
             iele2_dead = true;
-            if (instance_exists(iele[2]))
-                iele[2].iele_attack = "flee";
             break;
 
         case 2: // Iela3 moare
             iele3_dead = true;
             break;
     }
+
+    // Win condition: cand ambele au murit, Iela1 (singura ramasa) face
+    // plecaciune + fuge definitiv — vezi blocul dedicat din oBoss31/Step_0.gml
+    // si guard-ul din Step_0 principal (iele2_dead && iele3_dead → exit).
 }
 
 // ────────────────────────────────────────────────────────────
@@ -1096,7 +1100,7 @@ function _manage_hora()
             var _all_ready = true;
             for (var _i = 0; _i < 3; _i++)
             {
-                if (!instance_exists(iele[_i])) continue;
+                if (!instance_exists(iele[_i]) || iele[_i].is_dead) continue;
                 if (abs(iele[_i].x - scenario_target_x[_i]) > 16) { _all_ready = false; break; }
             }
             if (_all_ready || hora_timer > 300)
@@ -1105,7 +1109,7 @@ function _manage_hora()
                 hora_timer = 0;
                 var _ref_y = (instance_exists(iele[0])) ? iele[0].y : bb_player_y;
                 for (var _i = 0; _i < 3; _i++)
-                    if (instance_exists(iele[_i])) iele[_i].visible = false;
+                    if (instance_exists(iele[_i]) && !iele[_i].is_dead) iele[_i].visible = false;
                 if (!instance_exists(oHora))
                     instance_create_layer(hora_center_x, _ref_y, "Enemies", oHora);
             }
@@ -1158,7 +1162,9 @@ function _intro_step()
                         if (instance_exists(iele[_i])) iele[_i].hsp = 0;
                     intro_step  = 2;
                     intro_timer = 0;
-                    _start_hora();
+                    // Hora se formeaza exact unde s-au adunat Ielele (centrul arenei),
+                    // nu la player — la fel ca target-ul folosit de IeleIntro pentru "wait"
+                    _start_hora((arena_x1 + arena_x2) * 0.5);
 
                     var _max_d = 0;
                     for (var _i = 0; _i < 3; _i++)
@@ -1212,14 +1218,27 @@ function _intro_step()
                 fight_started        = true;
                 cd_hora              = 1500;
 
+                // Camera e deja blocata (cam_locked=true de cand Ielele s-au adunat,
+                // vezi oCamera.Step_0) si urmareste dinamic player+Iele prin
+                // Boss3Camera_Update() — nu mai e nevoie sa setam nimic manual aici.
+                // Playerul e deja tinut aproape de centrul arenei prin leash-ul din
+                // oCamera.Step_2 (activ cat !fight_started) — de-acum preia locul
+                // lui mecanismul propriu de pull al lui oHora.
+
                 // Salveaza centrul horei de intro — acolo vor aparea Ielele
                 var _hora_start_x = hora_center_x;
 
                 // Distruge oHora din intro — _manage_hora() va crea una noua
-                // la hora_center_x abia cand Ielele ajung fizic la player
+                // la hora_center_x abia cand Ielele ajung fizic la player.
+                // FIX: instance_destroy(oHora) paseaza tipul de obiect direct,
+                // nu e sintaxa corecta pentru a distruge o instanta anume — cu
+                // with(oHora) instance_destroy() (folosit corect in _end_hora,
+                // cateva linii mai jos in acest fisier) instanta veche ramanea
+                // nedistrusa, blocand _manage_hora() sa mai creeze una noua
+                // pentru hora #2 — de-acolo lipsa Health bar-ului (combat_visible
+                // se seteaza abia cand hora #2 se termina prin _end_hora()).
                 hora_center_x = clamp(bb_player_x, arena_x1 + 144, arena_x2 - 144);
-                if (instance_exists(oHora))
-                    instance_destroy(oHora);
+                with (oHora) instance_destroy();
 
                 hora_phase = 0;
                 hora_timer = 0;

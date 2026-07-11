@@ -44,7 +44,7 @@ function EnemyState_Attack()
             hsp = wolf_jump_dir * 3.5;
         }
 
-        // Miscare orizontala fara edge detection
+        // Miscare orizontala — oprire la margine platforma la coborare
         if (place_meeting(x + hsp, y, oWall))
         {
             while (!place_meeting(x + sign(hsp), y, oWall))
@@ -52,7 +52,20 @@ function EnemyState_Attack()
             hsp = 0;
         }
         else
-            x += hsp;
+        {
+            if (vsp > 0 && mask_index != -1)
+            {
+                // Lookahead de check_distance px cu rectangle mic (fara bug-ul mastii de 176px)
+                var _fy = y + (sprite_get_bbox_bottom(mask_index) - sprite_get_yoffset(mask_index)) * size;
+                var _lx = x + sign(hsp) * check_distance;
+                if (collision_rectangle(_lx - 2, _fy, _lx + 2, _fy + 40, oWall, false, false) == noone)
+                    hsp = 0; // nu e sol la check_distance px inainte → opreste
+                else
+                    x += hsp;
+            }
+            else
+                x += hsp;
+        }
 
         Enemy_VerticalResolve();
 
@@ -135,24 +148,44 @@ function EnemyState_Attack()
 
 function _Enemy_HorizontalResolve()
 {
-    var _edge_dir    = (sign(hsp) != 0) ? sign(hsp) : patrol_dir;
-    var _has_patrol  = variable_instance_exists(id, "patrol_dist") && patrol_dist > 0;
+    var _edge_dir   = (sign(hsp) != 0) ? sign(hsp) : patrol_dir;
+    var _has_patrol = variable_instance_exists(id, "patrol_dist") && patrol_dist > 0;
 
     if (_has_patrol)
     {
-        // Distanta fixa de patrula setata din Creation Code
+        // Auto-init: centreaza intervalul pe pozitia de spawn
+        if (!variable_instance_exists(id, "x_patrol_start"))
+            x_patrol_start = x - patrol_dist * 0.5;
+
+        // Limita de distanta — inverseaza in PATROL, opreste in CHASE
         var _next_x = x + hsp;
         if (_next_x < x_patrol_start || _next_x > x_patrol_start + patrol_dist)
         {
-            hsp        = -hsp;
-            patrol_dir = -patrol_dir;
+            if (state == ENEMYSTATE.PATROL)
+            {
+                hsp = -hsp; patrol_dir = -patrol_dir;
+                if (Enemy_IsWolfEnemy()) wolf_just_turned = true;
+            }
+            else hsp = 0;
+        }
+
+        // Edge detection — nu cobora de pe platforma nici in CHASE
+        if (idle_break_phase == 0 && place_meeting(x, y + 1, oWall)
+        && !place_meeting(x + check_distance * _edge_dir, y + 1, oWall))
+        {
+            if (state == ENEMYSTATE.PATROL)
+            {
+                hsp = -hsp; patrol_dir = -patrol_dir;
+                if (Enemy_IsWolfEnemy()) wolf_just_turned = true;
+            }
+            else hsp = 0;
         }
     }
     else
     {
-        // Detectie margine platforma (comportament normal)
-        if (idle_break_phase == 0 && grounded && afraidOfHeights
-        &&  !place_meeting(x + check_distance * _edge_dir, y + 1, oWall))
+        // Detectie margine platforma — comportament normal
+        if (idle_break_phase == 0 && place_meeting(x, y + 1, oWall) && afraidOfHeights
+        && !place_meeting(x + check_distance * _edge_dir, y + 1, oWall))
         {
             hsp        = -hsp;
             patrol_dir = -patrol_dir;
@@ -217,7 +250,8 @@ function _Enemy_UpdateLocomotionAnim()
         {
             grounded = true;
             image_speed = 0.25;
-            sprite_index = (sign(hsp) == 0) ? sWolf_idle : sWolfR;
+            // In CHASE, arata mereu run (gata de salt) chiar daca nu se misca
+            sprite_index = (sign(hsp) == 0 && state != ENEMYSTATE.CHASE) ? sWolf_idle : sWolfR;
         }
 
         if (idle_break_phase == 2 && sprite_index == sWolf_idle && animation_end())

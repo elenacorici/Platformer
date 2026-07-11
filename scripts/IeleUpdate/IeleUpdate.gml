@@ -9,6 +9,17 @@ function IeleUpdate()
     var _px        = instance_exists(oPlayer) ? oPlayer.x : x;
     var _py        = instance_exists(oPlayer) ? oPlayer.y : y;
 
+    // Reset implicit — SINGURUL loc din tot codul care seteaza image_angle
+    // e zborul spre creanga (IelePerch.gml, "IN ZBOR"), care il recalculeaza
+    // din nou in ACELASI frame daca iele_attack=="perch" si inca in zbor (mai
+    // jos), deci reset-ul de aici nu produce niciun flicker vizual. Fara el,
+    // image_angle ramanea agatat de ultima valoare din zbor pe orice alta
+    // tranzitie care nu trece prin resetarile proprii ale IelePerch (sosire/
+    // dismount) — ex. hora/stomp/pingpong pornite direct din perch — stricand
+    // vizual toate animatiile ulterioare (image_angle e proprietate de
+    // instanta, nu de sprite).
+    image_angle = 0;
+
     // ── ATTACK STATE — complet separat de orbit ───────────────────
     if (iele_attack != "none")
     {
@@ -42,10 +53,28 @@ function IeleUpdate()
         y = floor(y);
     }
 
-    // Coliziune orizontala — la perete incearca salt, altfel oprire
+    // Coliziune orizontala — la perete incearca salt, altfel oprire.
+    // EXCEPTIE: "traverse" (dash), "walk" si "skip" NU coliziona cu peretele —
+    // toate 3 sunt miscari cu tinta fixa (oprite separat in switch-ul de mai
+    // jos cand abs(x-orbit_target_x)<10/12), nu trebuie sa sara/opreasca la
+    // perete. Bug gasit live: Ielele ambientale (walk/skip din
+    // _iele_pick_orbit, tinta langa marginea arenei prin Iele_EdgeSafeDist)
+    // loveau zidul real inainte sa ajunga la tinta — ramaneau blocate sarind
+    // pe loc (vsp=-3.5 repetat, fara progres orizontal, agravat de linia
+    // "x += hsp" de mai jos care impingea in perete chiar pe ramura de salt).
+    // Cu un zid de inaltimea room-ului (nu o treapta mica), saltul nu reuseste
+    // niciodata sa treaca — vizual identic cu "merge pe loc in perete". Daca
+    // 2 Iele faceau asta simultan pe ziduri opuse si playerul era destul de
+    // aproape de amandoua (sub pragul de wrap-eligibility, 350px), nu erau
+    // excluse din bounding-box — camera se intindea sa le incadreze pe
+    // amandoua cat stateau blocate, parand ca "se blocheaza toata scena".
+    // Acelasi tratament ca la "traverse" (bug anterior, doar pentru dash_to)
+    // rezolva si cazul ambiental.
     if (hsp != 0)
     {
-        if (place_meeting(x + hsp, y, oWall))
+        if (iele_state == "traverse" || iele_state == "walk" || iele_state == "skip")
+            x += hsp;
+        else if (place_meeting(x + hsp, y, oWall))
         {
             if (_on_ground && vsp == 0 && iele_phase == "orbit")
                 vsp = -3.5; // sare peste perete
@@ -60,8 +89,10 @@ function IeleUpdate()
                     orbit_move_timer = irandom_range(40, 80);
                 }
             }
+            x += hsp;
         }
-        x += hsp;
+        else
+            x += hsp;
     }
 
     // Scale consistent
@@ -249,21 +280,27 @@ function IeleUpdate()
     // ── REPULSIE PASIVA: player si celelalte Iele ────────────────
     if (iele_phase == "orbit" && iele_state != "traverse" && iele_state != "flyover")
     {
-        // Repulsie fata de player
-        if (instance_exists(oPlayer) && abs(x - _px) < 150)
-        {
+        // Repulsie fata de player — DOAR in idle, nu in walk/skip. Motiv (bug
+        // gasit live — "merge pe loc"): walk/skip au deja o tinta cu scop
+        // (ambiental sau de scenariu); daca tinta e spre player si playerul
+        // ramane <150px, repulsia (1.5px/frame) lupta cu mersul (0.8-1.2px/
+        // frame) in directie opusa → deriva neta foarte lenta, Iela pare sa
+        // "mearga pe loc" (animatia ruleaza, corpul aproape nu se misca) pana
+        // la timeout-ul de state_timer (~3.6 sec). Excluzand walk/skip de la
+        // repulsia de player, mersul cu scop nu mai e contracarat.
+        if (instance_exists(oPlayer) && iele_state == "idle" && abs(x - _px) < 150)
             x += sign(x - _px) * 1.5;
-            // Daca repulsia ne impinge departe de target in walk/skip → idle
-            if ((iele_state == "walk" || iele_state == "skip")
-            &&  sign(x - _px) != sign(orbit_target_x - _px))
-            {
-                hsp              = 0;
-                iele_state       = "idle";
-                orbit_move_timer = irandom_range(60, 120);
-            }
-        }
-        // Repulsie intre Iele — doar cand merg in ACEEASI directie
-        if (_ctrl)
+        // Repulsie intre Iele — DOAR in idle, la fel ca la repulsia de player
+        // de mai sus. Motiv (a doua varianta a bug-ului "merge pe loc", gasita
+        // live): daca Iela A e idle (hsp=0) si Iela B merge/skip spre o tinta
+        // care trece pe langa A, verificarea veche de "crossing" (directii
+        // opuse) nu prindea cazul — sign(0) nu e nici + nici -, deci A "idle"
+        // conta mereu ca sa nu se incruciseaza, iar repulsia (1.0px/frame)
+        // lupta aproape 1:1 cu mersul lui B (0.8-1.2px/frame) catre A, exact
+        // ca la repulsia de player. Fix: repulsia intre Iele se aplica doar
+        // cat timp Iela CURENTA e idle — nu mai intra in conflict cu un mers
+        // cu scop.
+        if (_ctrl && iele_state == "idle")
         {
             for (var _si = 0; _si < 3; _si++)
             {
@@ -271,15 +308,16 @@ function IeleUpdate()
                 if (_so == id || !instance_exists(_so)) continue;
                 if (abs(x - _so.x) >= 80) continue;
 
-                // Nu repela daca se incruciseaza (directii opuse)
-                var _my_dir    = sign(hsp);
-                var _other_dir = sign(_so.hsp);
-                var _crossing  = (_my_dir != 0 && _other_dir != 0 && _my_dir != _other_dir);
-
-                if (!_crossing)
-                    x += sign(x - _so.x) * 1.0;
+                x += sign(x - _so.x) * 1.0;
             }
         }
+
+        // Clamp la limitele arenei — fara asta, repulsia de mai sus putea
+        // scoate o Iela complet din arena (si din room) daca playerul o
+        // tinea lipita de zid (repulsia o impinge tot inainte, fara sa
+        // verifice vreodata peretele).
+        if (_ctrl)
+            x = clamp(x, oBoss3Controller.arena_x1, oBoss3Controller.arena_x2);
     }
 
     // ── FAZA: ORBIT (show, dezinteresat) ─────────────────────
@@ -398,6 +436,14 @@ function IeleUpdate()
                 }
                 break;
         }
+
+        // Clamp la limitele arenei — necesar mai ales pentru "flyover", care
+        // deriveaza orizontal in tot timpul saltului FARA sa verifice
+        // vreodata orbit_target_x (doar coliziunea fizica reala cu oWall,
+        // care poate fi mult mai departe decat limita logica a arenei) —
+        // asta lasa o Iela sa iasa din arena daca sare langa margine.
+        if (_ctrl)
+            x = clamp(x, oBoss3Controller.arena_x1, oBoss3Controller.arena_x2);
     }
 
     // ── FAZA: PING PONG ──────────────────────────────────────────
@@ -658,17 +704,20 @@ function _iele_pick_orbit()
     }
     else if (_roll < 90)
     {
-        // SKIP (15%): topaituri — pe aceeasi parte ca Iela fata de player
+        // SKIP (15%): topaituri — pe aceeasi parte ca Iela fata de player.
+        // Distanta se comprima daca ar trece de zid (Iele_EdgeSafeDist) —
+        // altfel putea sta lipita de zid langa player pentru cateva secunde.
         var _sign_s    = (x < _px) ? -1 : 1;
-        orbit_target_x = clamp(_px + _sign_s * irandom_range(200, 380), _ax1, _ax2);
+        orbit_target_x = _px + _sign_s * Iele_EdgeSafeDist(_px, _sign_s, irandom_range(200, 380), _ax1, _ax2);
         iele_state     = "skip";
         skip_hop_timer = 12;
     }
     else
     {
-        // WALK (10%): pasi lenti — pe aceeasi parte ca Iela fata de player
+        // WALK (10%): pasi lenti — pe aceeasi parte ca Iela fata de player.
+        // Aceeasi comprimare ca la SKIP.
         var _sign_w    = (x < _px) ? -1 : 1;
-        orbit_target_x = clamp(_px + _sign_w * irandom_range(180, 320), _ax1, _ax2);
+        orbit_target_x = _px + _sign_w * Iele_EdgeSafeDist(_px, _sign_w, irandom_range(180, 320), _ax1, _ax2);
         iele_state     = "walk";
     }
 

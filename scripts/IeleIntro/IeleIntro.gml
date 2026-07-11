@@ -69,7 +69,17 @@ function IeleIntro()
     }
 
     // ── Coliziune orizontala + detectie bounce ─────────────────
-    if (hsp != 0 && place_meeting(x + hsp, y, oWall))
+    // "patrol" ARE NEVOIE de coliziune reala (se loveste intentionat de 3 ori
+    // ca sa stie unde sunt marginile arenei, inainte sa treaca la "walk").
+    // "walk" (spre centrul arenei) are deja propria oprire pe distanta
+    // (abs(_dx)<80 mai sus) — nu trebuie sa se blocheze fizic in zid daca,
+    // dupa redimensionarea room-ului sau alte variatii, tinta ei ajunge sa
+    // fie dincolo de un perete pe care patrol-ul nu l-a extras-o complet.
+    if (intro_walk_phase == "walk")
+    {
+        x += hsp;
+    }
+    else if (hsp != 0 && place_meeting(x + hsp, y, oWall))
     {
         // Muta la marginea peretelui
         while (!place_meeting(x + sign(hsp), y, oWall)) x += sign(hsp);

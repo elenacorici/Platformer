@@ -3,6 +3,10 @@ spr_idle   = sIele2Idle;
 spr_walk   = sIele2Walk;
 spr_skip   = sIele2Skip;
 spr_static = sIele2;
+// Masca de coliziune FIXA — fara asta, GM foloseste bbox-ul sprite-ului curent,
+// care difera intre skip/walk/static, cauzand blocaje intermitente in perete
+// exact la tranzitia patrol(skip)->walk
+mask_index = spr_skip;
 spr_dash = -1;          // nu are dash → IeleUpdate va folosi skip
 spr_jump = sIele2Jump;
 spr_push = sIele2Push;
@@ -95,3 +99,10 @@ flash            = 0;
 hitfrom          = 0;
 is_dead          = false;
 rage_active      = false;
+
+// ── Moarte in 3 parti ──────────────────────────────────────────
+spr_die_a       = sIele2DIeA; // Part A — hop-uri esuate (incearca sa zboare, nu reuseste)
+spr_die_b       = siele2DieB; // Part B — destrama (declansata in aer, dupa ridicare)
+death_phase     = 0;          // 0=normal, 1=hop-uri esuate, 2=ridicare, 3=destrama, 4=terminat
+death_hop_count = 0;          // cate hop-uri esuate a facut deja
+death_lift_t    = 0;          // timer pentru faza de ridicare (2)

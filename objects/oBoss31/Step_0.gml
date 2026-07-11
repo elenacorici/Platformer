@@ -1,46 +1,73 @@
-// ── Moarte ────────────────────────────────────────────────────
-if (is_dead)
+// ── Iela1 nu moare niciodata din damage (hp clampat de controller la >=1).
+// Cand AMBELE surori au murit (iele2_dead && iele3_dead), ea e ultima ramasa —
+// face o plecaciune de ramas bun (Part 1), apoi fuge definitiv spre dreapta
+// (Part 2, loop) → la iesirea din ecran seteaza fight_ended (win condition).
+// Blocheaza orice alta logica (controller-ul deja nu mai porneste nimic nou
+// odata ce iele2_dead && iele3_dead, vezi oBoss3Controller/Step_0.gml).
+if (instance_exists(oBoss3Controller)
+&&  oBoss3Controller.iele2_dead && oBoss3Controller.iele3_dead)
 {
-    hsp = 0;
-    vsp += grv;
-    if (place_meeting(x, y + vsp, oWall))
+    if (escape_phase == 0)
     {
-        while (!place_meeting(x, y + 1, oWall)) y++;
-        vsp = 0;
+        escape_phase      = 1;
+        escape_holding    = false;
+        hsp               = 0;
+        vsp               = 0;
+        sprite_index      = spr_bow;
+        image_index       = 0;
+        image_speed       = 0.15;
+        var _px = instance_exists(oPlayer) ? oPlayer.x : x;
+        image_xscale = (_px >= x) ? -image_xscale_base : image_xscale_base; // se intoarce spre player
     }
-    else y += vsp;
-
-    if (sprite_index != spr_sit_hit)
+    else if (escape_phase == 1)
     {
-        sprite_index = spr_sit_hit;
-        image_index  = 0;
-        image_speed  = 0.12;
+        // Faza 1a: joaca animatia de plecaciune pana la capat, apoi
+        // INGHEATA pe ultimul cadru (escape_holding) un timp fix — altfel
+        // animation_end() ar trece direct la faza de fuga in acelasi frame
+        // in care s-a terminat plecaciunea, facand-o practic invizibila.
+        if (!escape_holding)
+        {
+            if (animation_end())
+            {
+                escape_holding    = true;
+                escape_hold_timer = 40; // ~0.67 sec pauza vizibila pe ultimul cadru
+                image_index        = sprite_get_number(spr_bow) - 1;
+                image_speed         = 0;
+            }
+        }
+        else
+        {
+            escape_hold_timer--;
+            if (escape_hold_timer <= 0)
+            {
+                escape_phase   = 2;
+                escape_holding = false;
+                sprite_index   = spr_flee;
+                image_index    = 0;
+                image_speed    = 0.25;
+                // FIX: implicit (nemirror) = orientata spre STANGA (convenite
+                // in tot restul codului) — ca sa alerge cu fata spre dreapta
+                // (directia reala de fuga, hsp pozitiv mai jos) trebuie
+                // oglindita, deci semn NEGATIV. Inainte era pozitiv, facand-o
+                // sa alerge cu spatele.
+                image_xscale = -image_xscale_base;
+            }
+        }
     }
-    else if (image_index >= sprite_get_number(spr_sit_hit) - 1)
-        image_speed = 0; // îngheață pe ultimul frame
-
-    exit;
-}
-
-// ── Fuga (flee) ───────────────────────────────────────────────
-if (iele_attack == "flee")
-{
-    var _fdir = (x < room_width * 0.5) ? -1 : 1;
-    hsp       = _fdir * 6;
-    x        += hsp;
-    facing    = _fdir;
-    image_xscale = image_xscale_base * _fdir;
-
-    if (sprite_index != spr_walk) { sprite_index = spr_walk; image_speed = 0.25; }
-
-    vsp += grv;
-    if (place_meeting(x, y + vsp, oWall)) { while (!place_meeting(x, y + 1, oWall)) y++; vsp = 0; }
-    else y += vsp;
-
-    if (x < -150 || x > room_width + 150)
+    else // escape_phase == 2 — sprint spre dreapta, loop pana iese din ecran
     {
-        if (instance_exists(oBoss3Controller)) oBoss3Controller.fight_ended = true;
-        instance_destroy();
+        hsp = 6;
+        x  += hsp;
+
+        vsp += grv;
+        if (place_meeting(x, y + vsp, oWall)) { while (!place_meeting(x, y + 1, oWall)) y++; vsp = 0; }
+        else y += vsp;
+
+        if (x > room_width + 150)
+        {
+            oBoss3Controller.fight_ended = true;
+            instance_destroy();
+        }
     }
     exit;
 }

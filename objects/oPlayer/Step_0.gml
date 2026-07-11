@@ -13,6 +13,16 @@ if (is_stunned) {
         is_stunned = false;
     hsp = 0;
     vsp = 0;
+
+    // Blocat vizual in idle — altfel ramane cu orice animatie rula inainte de stun
+    // (ex. mers), dand impresia ca "merge pe loc" desi hsp/vsp sunt 0
+    var _spr_idle_stun = (current_weapon == "bow") ? sPlayerBowI : sPlayerI;
+    if (sprite_index != _spr_idle_stun)
+    {
+        sprite_index = _spr_idle_stun;
+        image_index  = 0;
+    }
+    image_speed = 0.08;
 }
 else if(hascontrol) {
 //Get Player Input
@@ -38,12 +48,22 @@ if (key_lockon && has_bow && current_weapon == "bow") {
     if (bow_target != noone) {
         bow_target = noone; // Q din nou = anuleaza
     } else {
-        var _types = [oEnemy, oEnemyBig, oBoss1, oBoss2];
+        var _types = [oEnemy, oEnemyBig, oBoss1, oBoss2, oBoss31, oBoss32, oBoss33];
+        var _iele_fight_on = instance_exists(oBoss3Controller) && oBoss3Controller.fight_started;
         var _nearest = noone;
         var _min_d   = 99999;
         for (var _i = 0; _i < array_length(_types); _i++) {
             var _inst = instance_nearest(x, y, _types[_i]);
             if (_inst != noone) {
+                // Ielele nu pot fi targetate inainte sa inceapa fight-ul (intro/
+                // patrulare) — la fel ca la damage.
+                if ((_types[_i] == oBoss31 || _types[_i] == oBoss32 || _types[_i] == oBoss33)
+                &&  !_iele_fight_on) continue;
+                // Ielele moarte raman ca instante (invizibile, nu se distrug) —
+                // nu trebuie sa poata fi targetate. Celelalte tipuri (oEnemy/
+                // oBoss1/oBoss2) nu au deloc variabila is_dead, de-aici verificarea
+                // cu variable_instance_exists inainte de a o citi.
+                if (variable_instance_exists(_inst, "is_dead") && _inst.is_dead) continue;
                 var _d = point_distance(x, y, _inst.x, _inst.y);
                 if (_d < _min_d) { _min_d = _d; _nearest = _inst; }
             }
@@ -52,8 +72,11 @@ if (key_lockon && has_bow && current_weapon == "bow") {
     }
 }
 
-// Verifica daca target ul mai exista
-if (bow_target != noone && !instance_exists(bow_target))
+// Verifica daca target ul mai exista (sau a murit intre timp — Ielele nu se
+// distrug la moarte, doar devin invizibile, deci instance_exists nu ar prinde asta)
+if (bow_target != noone
+&&  (!instance_exists(bow_target)
+||   (variable_instance_exists(bow_target, "is_dead") && bow_target.is_dead)))
     bow_target = noone;
 
 switch (state)

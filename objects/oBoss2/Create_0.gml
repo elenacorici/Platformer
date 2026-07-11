@@ -43,6 +43,14 @@ wolf_triggered = false; // flag: atacul cu lupul s-a declansat deja
 
 prev_image_index = 0;
 
+// Apariție — invizibil pana dupa ceata
+visible       = false;
+image_alpha   = 0;
+appear_timer  = -1;
+settle_timer  = -1;
+state         = "appearing_wait";
+attack_cooldown = 99999;
+
 // Particule
 p_sys  = part_system_create_layer(layer, false);
 part_system_depth(p_sys, -100);

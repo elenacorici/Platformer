@@ -15,8 +15,12 @@ wolf_draw_oy = 0;
 wolf_jump_active = false;
 wolf_jump_dir    = 0;
 
-sight_range    = 500;
-attack_range   = 200;
+sight_range            = 500;
+attack_range           = 200;
+attack_cooldown_frames = 20;
+
+has_been_hit   = false; // daca a luat damage vreodata → nu mai doarme niciodata
+wolf_just_turned = false; // setat de _Enemy_HorizontalResolve la fiecare intoarcere
 
 // Vizual — Enemy_UpdateFacing folosește size
 if (object_index == oEnemyBig)

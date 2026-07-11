@@ -1,1 +1,1 @@
-target=BossRoom;
+target=BossRoom2;

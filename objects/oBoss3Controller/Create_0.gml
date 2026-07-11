@@ -7,9 +7,12 @@ iele[2] = noone;
 bb_player_x = 0;
 bb_player_y = 0;
 
-// Limitele arenei (Ielele nu ies din zona asta)
-arena_x1 = 100;
-arena_x2 = room_width - 100;
+// Limitele arenei (Ielele nu ies din zona asta) — room-ul a fost redimensionat
+// ca sa fie EXACT arena (fara zona moarta), deci fara buffer separat aici;
+// marginile de 40px deja folosite in scenarii/edge-safety (Iele_EdgeSafeDist
+// etc.) sunt suficiente ca sa nu se lipeasca exact de perete.
+arena_x1 = 0;
+arena_x2 = room_width;
 
 // Comanda curenta
 // "wander" | "push"
@@ -92,6 +95,7 @@ cd_stomp           = 9999; // blocat in phase 1 si 2
 hora_preview_done  = false;
 phase1_setup_done  = false;
 phase1_perch_timer = 300;  // 5 sec pana cand Iela3 urca pe creanga
+hora_dispersal_done = false; // true dupa prima hora reala (2, prima de atac) — vezi _end_hora()
 
 // Post-hora Phase 1: push attack imediat dupa dispersie dramatica
 phase1_push_pending = false;
@@ -102,6 +106,8 @@ fight_started           = false;
 intro_triggered         = false; // setat de oIntroTrigger cand player intra in arena
 intro_step              = 0;   // 0=wait trigger, 1=patrula+adunare, 2=hora_form, 3=dialog
 intro_timer             = 0;
+combat_visible          = false; // true dupa ce hora #2 (atacul de start) se termina si Ielele se
+                                  // imprastie dramatic — abia atunci apare Health bar-ul in Draw_64
 intro_arena_timer       = 0;
 intro_sync_dur          = 150; // durata sincronizata a cursei spre hora (calculata la start)
 intro_dialog_visible    = false;

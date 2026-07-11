@@ -74,7 +74,8 @@ if(hits>0)
 					}
 					else if (object_index == oBoss31 || object_index == oBoss32 || object_index == oBoss33)
 					{
-						if (invincible_timer <= 0 && !is_dead)
+						var _fight_on = instance_exists(oBoss3Controller) && oBoss3Controller.fight_started;
+						if (_fight_on && invincible_timer <= 0 && !is_dead)
 						{
 							hp -= 1;
 							flash            = 6;
@@ -95,13 +96,15 @@ if(hits>0)
 ds_list_destroy(hitByAttackNow);
 
 // Detectie Iele prin distanta (bbox sIele1Idle = 9px, prea ingust pt. hitbox overlap)
-var _iele_range = 80;
-var _iele_obj = [oBoss31, oBoss32, oBoss33];
+var _iele_range   = 80;
+var _iele_obj     = [oBoss31, oBoss32, oBoss33];
+var _iele_fight_on = instance_exists(oBoss3Controller) && oBoss3Controller.fight_started;
 for (var _ii = 0; _ii < 3; _ii++)
 {
     with (_iele_obj[_ii])
     {
-        if (!is_dead
+        if (_iele_fight_on
+        &&  !is_dead
         &&  ds_list_find_index(other.hitByAttack, id) == -1
         &&  point_distance(other.x, other.y, x, y) < _iele_range)
         {

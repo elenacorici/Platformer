@@ -10,6 +10,7 @@ function IelePerch()
 
         sprite_index = spr_jump;
         image_speed  = 0.15;
+        image_angle  = 0; // reseteaza inclinarea ramasa de la zborul spre creanga
         hsp          = 0;
         image_yscale = image_yscale_base;
 
@@ -55,6 +56,7 @@ function IelePerch()
         y            = _ty;
         hsp          = 0;
         vsp          = 0;
+        image_angle  = 0; // reseteaza inclinarea ramasa de la zbor
         image_yscale = image_yscale_base;
         var _px = instance_exists(oPlayer) ? oPlayer.x : x;
         image_xscale = (_px >= x) ? -image_xscale_base : image_xscale_base;
@@ -116,17 +118,44 @@ function IelePerch()
     // ── IN ZBOR: dash spre perch ──────────────────────────────────
     var _spd = 5.5;
 
-    facing       = (_dx > 0) ? 1 : -1;
     sprite_index = (spr_dash != -1) ? spr_dash : spr_skip;
     image_speed  = 0.25;
-
-    image_xscale = -facing * image_xscale_base;
     image_yscale = image_yscale_base;
 
-    hsp = facing * _spd;
+    // Orizontala PROPORTIONALA cu distanta (ca la verticala mai jos), nu mereu
+    // viteza maxima — altfel, cand e aproape perpendicular sub/peste tinta
+    // (dx mic), tot se repezea lateral la viteza maxima inainte sa se opreasca,
+    // dand o miscare vizual gresita chiar cand ar trebui sa zboare aproape drept.
+    hsp = clamp(_dx * 0.15, -_spd, _spd);
 
     // Vertical: zbor direct spre perch_y (fara gravitatie)
     vsp = clamp(_dy * 0.15, -5.5, 5.5);
+
+    // NOU 2026-07-11 (dupa mai multe incercari esuate cu image_angle): fara
+    // rotatie deloc — doar oglindire stanga/dreapta, ca la restul codului
+    // (walk/skip/idle: image_xscale=-facing*base). Spritesheet-ul de dash NU
+    // e un sprite orizontal generic gandit pentru rotatie libera — cadrele
+    // proprii codifica deja progresiv inclinarea de zbor (de la aproape
+    // verticala, in picioare, la orizontala completa, cu parul fluturand tot
+    // mai mult pe masura ce "viteza" creste) — orice image_angle suplimentar
+    // intra in conflict cu desenul si arata gresit, indiferent de formula.
+    // Directia de orientare vine din _dx (spre perch), nu din hsp (care poate
+    // fi ~0 la zbor aproape vertical si ar face orientarea sa pâlpâie).
+    facing       = (_dx >= 0) ? 1 : -1;
+    image_xscale = -facing * image_xscale_base;
+    image_angle  = 0;
+
+    // Bucla pe ultimele frame-uri cat timp e in aer (inainte de aterizare) —
+    // specific per Iela, fiindca sprite-urile de dash nu au aceeasi structura:
+    // Iela3 (my_index=2) → ultimele 2 frame-uri; Iela1 (my_index=0) →
+    // penultimele 2 (fara ultimul frame din sprite). Foloseste sprite_index
+    // (nu spr_dash direct) — la Iela2 (spr_dash=-1) sprite_index e deja
+    // spr_skip (vezi mai sus), evita sprite_get_number(-1) care ar crasha.
+    var _tot        = sprite_get_number(sprite_index);
+    var _loop_end   = (my_index == 2) ? _tot : (_tot - 1);
+    var _loop_start = _loop_end - 2;
+    if (floor(image_index) >= _loop_end)
+        image_index = _loop_start;
 
     // Coliziune orizontala
     if (hsp != 0)

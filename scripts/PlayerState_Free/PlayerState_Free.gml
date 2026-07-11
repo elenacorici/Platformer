@@ -254,15 +254,19 @@ function PlayerState_Free(){
 		}
 		
 		// --- Override animatie daca e impins de Iele
+		// Foloseste _spr_idle/_spr_run (calculate mai sus, tin cont de
+		// current_weapon) in loc de sPlayerI/sPlayerR hardcodate — altfel
+		// playerul cu arcul echipat trecea vizual pe sprite-ul de topor
+		// exact cat era impins.
 		if (pushed_timer > 0)
 		{
-		    sprite_index  = sPlayerI;
+		    sprite_index  = _spr_idle;
 		    image_speed   = 0.1;
 		    image_xscale  = (pushed_dir > 0) ? 1 : -1;
 		}
 		else if (post_push_timer > 0)
 		{
-		    sprite_index  = sPlayerR;
+		    sprite_index  = _spr_run;
 		    image_speed   = 1;
 		    image_xscale  = (pushed_dir > 0) ? -1 : 1;
 		}

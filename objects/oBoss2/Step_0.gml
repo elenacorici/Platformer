@@ -1,3 +1,66 @@
+// ── APARIȚIE ─────────────────────────────────────────────────────────────
+if (string_pos("appearing", state) == 1)
+{
+    vsp += grv;
+    Enemy_VerticalResolve();
+    image_xscale = facing * boss_scale;
+    image_yscale = boss_scale;
+
+    // Faza 1: invizibil, asteapta semnalul de la oGrave
+    if (state == "appearing_wait")
+    {
+        if (instance_exists(oGrave) && oGrave.fog_done && appear_timer < 0)
+            appear_timer = 500;
+
+        if (appear_timer >= 0)
+        {
+            appear_timer--;
+            if (appear_timer <= 0)
+            {
+                visible      = true;
+                state        = "appearing_idle";
+                sprite_index = sBoss2Idle;
+                image_index  = 0;
+                image_speed  = idle_image_speed;
+                settle_timer = 120; // era 500 (~8.3s) — trece prea incet la ridicatul mainilor — ajusteaza
+                if (instance_exists(oPlayer))
+                    facing = -sign(oPlayer.x - x);
+            }
+        }
+    }
+
+    // Faza 2: fade in in ceata, stationeaza
+    if (state == "appearing_idle")
+    {
+        image_alpha   = min(1, image_alpha + 1/60);
+        settle_timer--;
+        if (settle_timer <= 0)
+        {
+            state            = "appearing_bats";
+            sprite_index     = sBoss2Attack2;
+            image_index      = 0;
+            image_speed      = 0.1;
+            prev_image_index = 0;
+        }
+    }
+
+    // Faza 3: animatia cu lilieci fara sa apara lilieci
+    if (state == "appearing_bats")
+    {
+        image_alpha = 1;
+        if (animation_end())
+        {
+            state           = "idle";
+            sprite_index    = sBoss2Idle;
+            image_index     = 0;
+            image_speed     = idle_image_speed;
+            attack_cooldown = 180;
+        }
+    }
+
+    exit;
+}
+
 vsp += grv;
 Enemy_VerticalResolve();
 

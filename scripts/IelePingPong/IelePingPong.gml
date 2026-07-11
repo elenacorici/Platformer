@@ -162,7 +162,14 @@ function IelePingPong()
             with (oPlayer)
             {
                 pushed_dir   = other.push_dir;
-                pushed_timer = 50;
+                // pushed_timer = 50; // vechi — cu 43% mai lung decat orice
+                // alt push din joc (toate celelalte push-uri, in IeleUpdate.gml,
+                // folosesc 35), trimitea playerul ~177.5px in loc de ~140px —
+                // posibil cauza reala a "il trimite prea departe, urmatoarea
+                // Iela nu-l mai prinde" (pozitia ei e fixa, bb_player_x+241,
+                // necalculata dinamic dupa impact). Aliniat la 35 ca sa fie
+                // consistent cu restul push-urilor din joc.
+                pushed_timer = 35;
                 hp          -= 1;
                 flash        = 8;
             }

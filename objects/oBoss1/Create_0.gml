@@ -1,7 +1,7 @@
 depth = 50; // în fața Tiles(100)
 boss_layer = layer; // salvat pentru scripturi
-hp = 2;
-max_hp = 2;
+hp = 40;      // realist: 4 hit-uri de slash (10 dmg) — comparabil cu oBoss2 (hp=30, 3 hit-uri)
+max_hp = 40;
 flash = 0;
 hitfrom = 0;
 
