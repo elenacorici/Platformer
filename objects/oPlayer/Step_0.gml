@@ -1,4 +1,18 @@
- 
+
+// Spikes — blink rosu repetat, apoi restart total — ruleaza indiferent de
+// hascontrol/stun, ca sa se vada chiar cat playerul e inghetat de coliziune
+if (spike_hit_timer > 0)
+{
+	spike_hit_timer--;
+	image_blend = ((spike_hit_timer div 5) % 2 == 0) ? c_red : c_white;
+
+	if (spike_hit_timer <= 0)
+	{
+		image_blend = c_white;
+		SlideTransition(TRANS_MODE.RESTART);
+	}
+}
+
 // Finishing move — rulează indiferent de hascontrol
 if (state == PLAYERSTATE.FINISHING_MOVE)
 {

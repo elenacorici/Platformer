@@ -31,6 +31,20 @@ letterbox_max     = 200; // cât de mult se îngustează — ajustează după gu
 hora_surf = -1; // surface pentru efectul de vignette hora
 cam_y_offset = 0;
 
+// Cadraj vertical bazat pe sol — cat timp playerul e la/deasupra solului
+// (ground_y), camera arata mereu exact "tiles_below_ground" tile-uri sub el
+// (nu mai mult), indiferent de inaltimea view-ului curent. Sub sol, view-ul
+// se micsoreaza (zoom in) fata de cel normal, ca sa dea senzatia de spatiu
+// stramt/adanc.
+ground_y            = 864;
+tiles_below_ground   = 3;
+below_ground_visible = tiles_below_ground * 32; // 96px
+
+view_w_normal = _view_w;
+view_h_normal = _view_h;
+view_w_under  = 960; // ajusteaza — cat de "zoomat" e camera sub sol
+view_h_under  = 540;
+
 // Lock camera (boss rooms) — activat de oBossCamTrigger
 cam_locked = false;
 cam_lock_x = 0;
@@ -87,7 +101,7 @@ if (room == rTunnel_1 || room == rTunnel_2)
 if (room == rRoom3)
 {
     var _pars_r3   = ["Par1", "Par2", "Par3"];
-    var _yscale_r3 = (720.0 - 160.0 + 48.0) / 300.0; // 2.03 — view - podea + 48px extra
+    var _yscale_r3 = (720.0 - 160.0 + 48.0 + 128.0) / 300.0; // 2.45 — view - podea + 48px extra + 128px (4x32) suplimentar
     var _xscale_r3 = 1280.0 / 500.0;                  // 2.56 — un tile = exact 1 view width
     for (var _j = 0; _j < array_length(_pars_r3); _j++)
     {
@@ -98,5 +112,24 @@ if (room == rRoom3)
         layer_background_stretch(_bid_r3, false);
         layer_background_xscale(_bid_r3, _xscale_r3);
         layer_background_yscale(_bid_r3, _yscale_r3);
+    }
+}
+
+// BossRoom3 — layere "Trees"/"Mountains" (birch_trees1/2, 500x250), aceeasi formula
+// ca BossRoom_1/rRoom3 (room height 1024, deci acelasi offset de podea 160 e valabil)
+if (room == BossRoom3)
+{
+    var _layers_br3 = ["Trees", "Mountains"];
+    var _yscale_br3 = (720.0 - 160.0 + 48.0) / 250.0; // 2.432 — view - podea + 48px extra
+    var _xscale_br3 = 1280.0 / 500.0;                  // 2.56 — un tile = exact 1 view width
+    for (var _k = 0; _k < array_length(_layers_br3); _k++)
+    {
+        var _ln_br3 = _layers_br3[_k];
+        if (!layer_exists(_ln_br3)) continue;
+        var _lid_br3 = layer_get_id(_ln_br3);
+        var _bid_br3 = layer_background_get_id(_lid_br3);
+        layer_background_stretch(_bid_br3, false);
+        layer_background_xscale(_bid_br3, _xscale_br3);
+        layer_background_yscale(_bid_br3, _yscale_br3);
     }
 }

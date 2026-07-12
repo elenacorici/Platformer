@@ -52,6 +52,9 @@ roll_dir = 1;
 roll_timer = 0;
 roll_duration = 60;
 roll_speed = 5;
+roll_anim_timer = 0; // avansul framurilor de roll, controlat manual (nu prin image_speed)
+roll_looping = false; // true = in bucla scurta 5↔6, cat timp W e tinut apasat
+roll_loop_alt = false; // alterneaza intre frame 5 si 6 in bucla scurta
 fast_falling = false;
 
 jumps_max = 2;
@@ -72,6 +75,21 @@ part_type_speed(p_dust, 1, 3, -0.1, 0);
 part_type_direction(p_dust, 0, 360, 0, 30);
 part_type_gravity(p_dust, 0.2, 270);
 part_type_life(p_dust, 15, 25);
+
+// Particule rosii — moarte pe spikes (acelasi p_sys, tip nou de particula)
+p_hurt = part_type_create();
+part_type_shape(p_hurt, pt_shape_pixel);
+part_type_size(p_hurt, 2, 4, -0.05, 0);
+part_type_color2(p_hurt, c_red, c_maroon);
+part_type_alpha2(p_hurt, 1, 0);
+part_type_speed(p_hurt, 2, 5, -0.1, 0);
+part_type_direction(p_hurt, 0, 360, 0, 30);
+part_type_gravity(p_hurt, 0.15, 270);
+part_type_life(p_hurt, 25, 40);
+
+// Spikes — blink rosu repetat inainte de restart total (tasta R deja face
+// SlideTransition(TRANS_MODE.RESTART) — refolosim exact mecanismul asta)
+spike_hit_timer = 0;
 
 is_stunned      = false;
 stun_timer      = 0;

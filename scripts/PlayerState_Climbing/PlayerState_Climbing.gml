@@ -33,6 +33,15 @@ function PlayerState_Climbing()
         return;
     }
 
+    // Iesire laterala — A/D scoate playerul de pe scara/creanga in orice moment
+    var _key_a = keyboard_check(ord("A")) || keyboard_check(vk_left);
+    var _key_d = keyboard_check(ord("D")) || keyboard_check(vk_right);
+    if (_key_a || _key_d)
+    {
+        state = PLAYERSTATE.FREE;
+        return;
+    }
+
     // Jump off — Space singur = sari sus, Space+A/D = sari lateral
     if (key_jump_pressed)
     {

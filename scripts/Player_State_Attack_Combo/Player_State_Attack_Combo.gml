@@ -31,6 +31,7 @@ function PlayerState_Attack_Combo(){
 	hits += instance_place_list(x, y, oBoss1, hitByAttackNow, false);
 	hits += instance_place_list(x, y, oBoss2, hitByAttackNow, false);
 	hits += instance_place_list(x, y, oBat,   hitByAttackNow, false);
+	hits += instance_place_list(x, y, oBee,   hitByAttackNow, false);
 	if (hits > 0)
 	{
 		for (var i = 0; i < hits; i++)
@@ -49,6 +50,18 @@ function PlayerState_Attack_Combo(){
 							sprite_index = bat_die;
 							image_index  = 0;
 							image_speed  = 0.25;
+							hspeed       = 0;
+							vspeed       = -2;
+						}
+					}
+					else if (object_index == oBee)
+					{
+						if (state != "dying" && state != "dead")
+						{
+							state        = "dying";
+							sprite_index = albinuta_death;
+							image_index  = 0;
+							image_speed  = 0.2;
 							hspeed       = 0;
 							vspeed       = -2;
 						}

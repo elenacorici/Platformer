@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"Script33",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"Script33",
+  "parent":{
+    "name":"Axe",
+    "path":"folders/Sprites/Player/Axe.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

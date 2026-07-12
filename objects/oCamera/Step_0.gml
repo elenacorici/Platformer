@@ -80,11 +80,34 @@ if (cam_locked)
     }
 }
 
+// ── Zoom bazat pe sol — normal deasupra solului, mai mic (zoom in) sub sol ──
+// Tranzitia se face lin (lerp), nu doar la lock de boss — trebuie sa
+// actualizeze view_w_half/view_h_half in FIECARE frame, folosite mai jos
+// atat la formula de cadraj vertical cat si la clamp-urile de camera.
+if (!cam_locked)
+{
+    var _underground   = instance_exists(follow) && follow.y > ground_y;
+    var _target_view_w = _underground ? view_w_under : view_w_normal;
+    var _target_view_h = _underground ? view_h_under : view_h_normal;
+
+    var _cur_view_w = camera_get_view_width(cam);
+    var _cur_view_h = camera_get_view_height(cam);
+    var _new_view_w = round(lerp(_cur_view_w, _target_view_w, 0.05));
+    var _new_view_h = round(lerp(_cur_view_h, _target_view_h, 0.05));
+    camera_set_view_size(cam, _new_view_w, _new_view_h);
+    view_w_half = _new_view_w * 0.5;
+    view_h_half = _new_view_h * 0.5;
+}
+
 // Actualizare destinatie
 if (instance_exists(follow))
 {
-    // Y urmareste player-ul mereu
-    yTo = follow.y - 36 + cam_y_offset;
+    // Y — cadraj bazat pe view_h_half curent, ca marginea de jos a camerei sa
+    // arate mereu exact "below_ground_visible" px sub player (implicit 3
+    // tile-uri) — indiferent daca view-ul e cel normal sau cel micsorat de
+    // sub sol. La player.y == ground_y (stand pe sol), asta arata exact 3
+    // tile-uri sub linia solului, cum era cerut.
+    yTo = follow.y + below_ground_visible - view_h_half + cam_y_offset;
     // X: liber cand nu e lock, fixat la centrul room-ului la lock
     if (!cam_locked)
         xTo = follow.x;

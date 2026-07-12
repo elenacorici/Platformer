@@ -4,6 +4,7 @@ function PlayerState_Free(){
 	if (hora_stunned)
 	{
 		hsp = 0;
+		mask_index = sPlayer; // nu ramane pe masca ingusta de roll daca stun-ul incepe imediat dupa
 
 		// Gaseste solul de dedesubt
 		var _ground = y;
@@ -44,7 +45,7 @@ function PlayerState_Free(){
 		want_roll = (_s_pressed && (_key_a || _key_d))
 			|| (_s_held && (_a_pressed || _d_pressed));
 	}
-	
+
 	is_crouching = (roll_timer <= 0) && on_ground && _s_held && !_key_a && !_key_d;
 	
 	// --- Roll (tot în FREE): intrare doar pe podea
@@ -70,6 +71,8 @@ function PlayerState_Free(){
 		}
 		
 		roll_timer = roll_duration;
+		roll_anim_timer = 0;
+		roll_looping = false;
 		image_index = 0;
 		image_xscale = -roll_dir;
 	}
@@ -78,7 +81,27 @@ function PlayerState_Free(){
 	if (roll_timer > 0)
 	{
 		hsp = 0;
-		
+
+		sprite_index = (current_weapon == "bow") ? sPlayerBowR : sPlayerRoll;
+		// image_speed=0 — NU lasam GameMaker sa avanseze image_index automat (asta
+		// pare sa fi fost cauza reala a esecurilor anterioare: avansul automat +
+		// bucla nativa a sprite-ului se intampla intr-un moment ambiguu fata de
+		// codul din Step, deci verificarea "e pe ultimul frame" fie prindea prea
+		// tarziu, fie deloc). image_index e controlat 100% manual mai jos, prin
+		// roll_anim_timer — deterministic, independent de image_speed/animation_end.
+		image_speed  = 0;
+
+		// Masca ingusta cat timp se rostogoleste — sPlayer (mask fix la nivel de
+		// obiect) e prea inalt (47px) ca sa treaca pe sub goluri de 32px. sPlayerRoll/
+		// sPlayerBowR au acum bbox editat manual la exact 32px, cu bbox_bottom=56
+		// (aceeasi linie de sol ca sPlayer, care are tot bbox_bottom=56 la acelasi
+		// yorigin=56) — INAINTE, sPlayerRoll avea bbox_bottom=58 (2px mai adanc) si
+		// refoloseam masca de la crouch (sPlayerC, tot bbox_bottom=58) — orice masca
+		// care "musca" chiar si 1-2px mai adanc decat linia normala de sol ramane
+		// instant blocata in podea (place_meeting orizontal intoarce mereu true),
+		// inghetand roll-ul pe loc fara sa se mai miste (bug gasit live)
+		mask_index = sprite_index;
+
 		var _dir = roll_dir;
 		for (var _i = 0; _i < roll_speed; _i++)
 		{
@@ -87,7 +110,7 @@ function PlayerState_Free(){
 			else
 				break;
 		}
-		
+
 		if (place_meeting(x, y + vsp, oWall))
 		{
 			while (!place_meeting(x, y + sign(vsp), oWall))
@@ -96,17 +119,67 @@ function PlayerState_Free(){
 		}
 		else
 			y += vsp;
-		
-		sprite_index = (current_weapon == "bow") ? sPlayerBowR : sPlayerRoll;
-		image_speed = 1;
-		
-		if (animation_end())
-			roll_timer = 0;
-		else if (roll_timer > 0)
-			roll_timer--;
+		y = floor(y); // la fel ca la miscarea normala — y fractionar (din vsp+=grv
+		              // acumulat in timpul roll-ului) cauzeaza coliziuni false intermitente
+
+		var _w_held = keyboard_check(ord("W"));
+
+		if (!roll_looping)
+		{
+			// Ciclul complet (0→8) — o singura data, la fiecare START de roll
+			roll_anim_timer++;
+			image_index = min(roll_anim_timer, sprite_get_number(sprite_index) - 1);
+
+			if (roll_anim_timer >= sprite_get_number(sprite_index) - 1)
+			{
+				if (_w_held && (_key_a || _key_d))
+				{
+					// W tinut — nu mai reluam ciclul intreg (arata ca "se arunca in
+					// cap" cand sare instant de la ultimul frame la frame 0). In loc,
+					// intram in bucla scurta, care se repeta cat W ramane apasat.
+					// Indexuri RELATIVE la ultimul frame (nu hardcodate absolut) —
+					// bug gasit live: sprite-ul sPlayerRoll a pierdut un frame (9→8)
+					// intre timp, iar indexurile fixe 5/6 ajunsesera sa arate alte
+					// poze decat cele alese initial (una aproape de postura "ridicat
+					// in picioare"), de-aia parea "se arunca in cap si se ridica".
+					roll_dir      = _key_d ? 1 : -1;
+					image_xscale  = -roll_dir;
+					roll_looping  = true;
+					roll_loop_alt = false;
+					image_index   = sprite_get_number(sprite_index) - 3;
+				}
+				else
+					roll_timer = 0;
+			}
+		}
+		else
+		{
+			// Bucla scurta — alterneaza intre ultimele-3 si ultimele-4 frame-uri
+			// (relativ la numarul curent de frame-uri, nu indexuri fixe)
+			var _loop_hi = sprite_get_number(sprite_index) - 3;
+			var _loop_lo = sprite_get_number(sprite_index) - 4;
+			roll_loop_alt = !roll_loop_alt;
+			image_index   = roll_loop_alt ? _loop_lo : _loop_hi;
+
+			if (_w_held && (_key_a || _key_d))
+			{
+				roll_dir     = _key_d ? 1 : -1;
+				image_xscale = -roll_dir;
+			}
+			else
+			{
+				// W eliberat — iesim din bucla si terminam ciclul normal
+				// inainte sa oprim roll-ul complet, ca sa nu se taie brusc
+				roll_looping    = false;
+				roll_anim_timer = sprite_get_number(sprite_index) - 2;
+				image_index     = roll_anim_timer;
+			}
+		}
 	}
 	else
 	{
+		mask_index = sPlayer; // masca normala cat timp nu se rostogoleste
+
 		// --- Opinci: timer si activare ---
 		if (has_opinci) {
 			if (key_sprint && opinci_state == "ready") {
@@ -197,6 +270,24 @@ function PlayerState_Free(){
 				y = y + sign(vsp);
 			vsp = 0;
 		}
+		else if (vsp != 0 && climb_lock <= 0 && instance_place(x, y + vsp, oLadder) != noone)
+		{
+			// Prindere automata pe scara — coliziune DOAR pe verticala (cade/sare
+			// in ea), fara sa afecteze mersul pe orizontala (scara nu e in lista
+			// de coliziune orizontala de mai sus, deci se trece prin ea la mers
+			// normal). Nu necesita apasarea lui W/S ca sa se prinda — o data prinsa,
+			// PlayerState_Climbing() citeste el insusi W/S pentru urcat/coborat.
+			// IMPORTANT: mutam y efectiv in zona de suprapunere INAINTE de a
+			// schimba state-ul — altfel PlayerState_Climbing() verifica
+			// instance_place(x,y,oLadder) la pozitia veche (neaflata inca in
+			// scara), nu gaseste nimic si revine instant la FREE, care cade
+			// din nou si re-prinde iar — ciclu care parea "nu coboara deloc".
+			y = y + vsp;
+			state = PLAYERSTATE.CLIMBING;
+			vsp   = 0;
+			hsp   = 0;
+			return;
+		}
 		else
 			y = y + vsp;
 		y = floor(y); // previne y fractionar care cauzeaza false collision
@@ -208,6 +299,8 @@ function PlayerState_Free(){
 			roll_dir = (sign(hsp) != 0) ? sign(hsp) : -sign(image_xscale);
 			if (roll_dir == 0) roll_dir = 1;
 			roll_timer = roll_duration;
+			roll_anim_timer = 0;
+			roll_looping = false;
 			image_index = 0;
 			image_xscale = -roll_dir;
 		}
@@ -277,11 +370,17 @@ function PlayerState_Free(){
 	was_crouching = is_crouching;
 	
 	// Enter climbing — scara sau creanga ridicata
+	// roll_timer<=0 in plus fata de conditiile vechi — W e acum si tasta de
+	// "continua roll-ul", altfel un roll langa o creanga/scara ar fi intrerupt
+	// silentios de urcare (si roll_timer=0 mai jos ar taia si roll-ul continuu)
 	if (climb_lock > 0) climb_lock--;
 	var _key_up       = keyboard_check(vk_up) || keyboard_check(ord("W"));
+	// _key_down inclus aici — altfel un player care ATERIZEAZA pe o scara (vine
+	// de sus, scara e sub el) nu putea intra sa coboare, doar sa urce (bug gasit)
+	var _key_down     = keyboard_check(vk_down) || keyboard_check(ord("S"));
 	var _can_climb    = false;
 	var _grab_branch  = noone;
-	if (_key_up && climb_lock <= 0)
+	if ((_key_up || _key_down) && climb_lock <= 0 && roll_timer <= 0)
 	{
 		if (instance_place(x, y, oLadder))
 			_can_climb = true;

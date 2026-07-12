@@ -48,6 +48,7 @@ hits += instance_place_list(x,y,oBat,   hitByAttackNow,false);
 hits += instance_place_list(x,y,oBoss31, hitByAttackNow,false);
 hits += instance_place_list(x,y,oBoss32, hitByAttackNow,false);
 hits += instance_place_list(x,y,oBoss33, hitByAttackNow,false);
+hits += instance_place_list(x,y,oBee,   hitByAttackNow,false);
 if(hits>0)
 {
 		for(var i=0; i<hits; i++)
@@ -81,6 +82,19 @@ if(hits>0)
 							flash            = 6;
 							hitfrom          = other.attack_dir;
 							invincible_timer = 45;
+						}
+					}
+					else if (object_index == oBee)
+					{
+						// Albina — moare dintr-un hit, ca liliacul (fara hp)
+						if (state != "dying" && state != "dead")
+						{
+							state        = "dying";
+							sprite_index = albinuta_death;
+							image_index  = 0;
+							image_speed  = 0.2;
+							hspeed       = 0;
+							vspeed       = -2;
 						}
 					}
 					else
